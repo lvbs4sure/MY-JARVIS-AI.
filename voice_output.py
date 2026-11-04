@@ -86,7 +86,8 @@ document.getElementById('speak').onclick = () => {{
   current = utterance;
   utterance.voice = selectedVoice;
   utterance.lang = selectedVoice.lang;
-  utterance.rate = Number(document.getElementById('rate').value);
+  const requestedRate = Number(document.getElementById('rate').value);
+  utterance.rate = Number.isFinite(requestedRate) ? Math.max(0.5, Math.min(2, requestedRate)) : 1;
   utterance.onstart = () => {{ if (current !== utterance || stopped) return; active = true; status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }};
   utterance.onboundary = () => {{ if (current !== utterance || stopped || speechSynthesis.paused) return; speechPulse(); window.dispatchEvent(new CustomEvent('jarvis-boundary')); }};
   utterance.onpause = () => {{ if (current !== utterance || stopped) return; stopPreview(); status.textContent = 'Paused'; }};
