@@ -102,3 +102,84 @@ The live laptop check found 7.8 GiB total RAM and less than 2 GiB available at
 the sampled times. Disk space was sufficient, but Ollama was not reachable.
 Keep the existing working provider selected until a local model passes an actual
 resource/latency/quality benchmark. No application was closed to free memory.
+
+
+## MARK LIV capability parity — approved implementation backlog (2026-11-04)
+
+Reference: publicly documented FatihMakes MARK LIV features (architecture inspiration,
+not permission to copy its source, artwork, name or non-commercial licensed code).
+Build independent implementations; check licenses of any separately reused assets.
+The following are **requirements**, not claims of implemented or tested features.
+
+### A. Conversation and voice — prioritize after provider stability
+- Opt-in low-latency streaming conversation with visible connection status and
+  explicit cloud/local routing, interrupt/barge-in and cancellation.
+- User-selectable microphone and speaker, actual device validation, mute,
+  push-to-talk, optional locally processed wake word and self-echo prevention.
+- De-duplicate partial transcripts and replies; reconnect without losing
+  session history; display latency and helpful errors for 504/429/offline cases.
+- Never record or upload when muted; cloud audio needs informed permission.
+- Gate: physical Windows mic → transcript → answer → audible playback, plus
+  unplug/reconnect, interruption and no-duplicate tests.
+
+### B. Avatar and HUD — staged, resource-aware
+- Real listening/thinking/speaking/error/sleep states, audio-linked mouth
+  animation, blink/gaze, expression, theming, and a reactor-core alternative.
+- Lip movement must follow audible speech timing, not fake/random animation.
+- Start with lightweight rendering on the current 8 GiB integrated-GPU laptop;
+  evaluate a separate desktop shell only after voice is reliable.
+- Gate: frame-rate/RAM measurements, accessibility and synchronized playback.
+
+### C. Memory and personal context
+- Durable facts with categories, provenance, timestamps, edit/delete and
+  explicit user-approved saves; bounded prompt core plus searchable index and
+  on-demand recall rather than dumping all memories into every model call.
+- Session continuity, optional summaries, reminders and user-controlled
+  exports/backups; no silent deletion or private-data migration.
+- Gate: recall of old facts, corrected facts and revoked facts across restarts.
+
+### D. Skills, research and productivity
+- Capability registry that accurately describes available tools and limits;
+  schema-validated, allowlisted skills with per-skill permissions.
+- Research/news/weather with source URLs, timestamps, conflict checks and
+  clear network-use indicators; never invent live data.
+- Selected-file reading, document review, code helper, quiz, clipboard tools,
+  project workspace, reminders and scheduled topic monitoring.
+- Optional calendar, messaging, browser and media integrations through explicit
+  connections and per-action consent. Flight/game/home/3D-printer features are
+  separate opt-in integrations, not baseline installation requirements.
+- Gate: fixture-based tool tests, source attribution and permission checks.
+
+### E. Computer control, recovery and mobile access
+- Previewable file/window/settings actions with scoped permissions, activity
+  journal, cancellation and truthful execution verification.
+- Reversible operations should have a tested undo journal; destructive,
+  external or irreversible actions require direct user confirmation.
+- Never allow a model response to self-approve an action or execute raw shell.
+- Optional paired phone dashboard only after authentication, transport
+  security, revocation and local-network threat review.
+- Gate: path traversal/prompt-injection tests, rollback tests and real Windows
+  integration tests in a disposable test workspace.
+
+### F. Quality, release and ownership
+- Hardware governor for RAM/CPU/battery; no local inference when memory is
+  insufficient. Graceful Gemini fallback requires explicit cloud permission.
+- Real feature-status matrix (planned / implemented / Windows-verified);
+  benchmark quality, latency, RAM, voice and failure recovery on every release.
+- Signed/versioned Windows packaging, rollback, clean install and migrations.
+- Hosted multiuser product remains a separate later security project, with
+  owner-controlled access and no deployment or spend without approval.
+
+### Immediate execution order
+
+1. Stabilize Gemini timeout/retry classification and user-visible retry.
+2. Implement and verify voice/device/streaming foundations in small commits.
+3. Improve indexed, consent-based memory retrieval.
+4. Add a secure skill registry, then research and document actions.
+5. Implement preview/approval/undo before computer-control features.
+6. Add measured avatar lip-sync and desktop packaging.
+7. Expand opt-in integrations and only then consider hosted accounts.
+
+**Do not install or run MARK LIV code wholesale.** Its repository advertises a
+CC BY-NC 4.0 non-commercial license; independent development avoids accidental
+license conflicts, especially for a future commercial or hosted AI hub.
