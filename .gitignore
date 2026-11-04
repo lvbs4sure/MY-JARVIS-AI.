@@ -8,3 +8,5 @@ __pycache__/
 .pytest_cache/
 jarvis-server*.log
 jarvis-restart*.log
+.local-ai/
+.local-models/

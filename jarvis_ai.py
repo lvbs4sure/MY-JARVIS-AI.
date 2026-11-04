@@ -17,8 +17,8 @@ def _local_urlopen(req, timeout):
     return request.build_opener(request.ProxyHandler({}), _NoLocalRedirect()).open(req, timeout=timeout)
 
 
-def ollama_reply(messages, memories, name="JARVIS", personality="Helpful and concise"):
-    model = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+def ollama_reply(messages, memories, name="JARVIS", personality="Helpful and concise", model=None):
+    model = model or os.getenv("OLLAMA_MODEL", "llama3.2:3b")
     endpoint = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
     # Avoid sending private memories to arbitrary remote endpoints by accident.
     if endpoint not in ("http://127.0.0.1:11434", "http://localhost:11434"):
@@ -51,10 +51,10 @@ def ollama_reply(messages, memories, name="JARVIS", personality="Helpful and con
         return None, f"Local Ollama unavailable ({type(exc).__name__}). Start Ollama and pull the configured model."
 
 
-def generate_reply(messages, memories, name="JARVIS", personality="Helpful and concise"):
-    provider = os.getenv("JARVIS_PROVIDER", "ollama").lower().strip()
+def generate_reply(messages, memories, name="JARVIS", personality="Helpful and concise", provider=None, local_model=None):
+    provider = (provider or os.getenv("JARVIS_PROVIDER", "ollama")).lower().strip()
     if provider == "ollama":
-        response, error_message = ollama_reply(messages, memories, name, personality)
+        response, error_message = ollama_reply(messages, memories, name, personality, model=local_model)
         return response or error_message
     if provider != "gemini":
         return "Invalid JARVIS_PROVIDER. Choose ollama or gemini in your private .env file."

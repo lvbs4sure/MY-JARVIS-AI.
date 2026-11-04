@@ -153,3 +153,17 @@ The scene is a bundled public visual asset; private files are never placed in
 the static asset directory. The original .env and stored memory contents are
 checked for preservation. Advanced research, file actions, continuous voice,
 permissioned computer control and hosted accounts remain later architecture phases.
+
+## Ordered implementation and additional quality gates
+
+`DELIVERY_PLAN.md` is the ordered delivery checklist for this architecture,
+including the owner's historical blueprint supplied on 2026-11-04. It records
+confirmed decisions, proposals and unverified features separately. The immediate
+next checkpoint is local-AI readiness and installed-model discovery, followed by
+an approved hardware-appropriate local-runtime benchmark. No API provider can be
+promised unlimited service, and no global-quality ranking is claimed.
+
+New engineering gates include reproducible capability evaluations, explicit data
+flow, resource budgets, approved recovery/migration tests, typed tool boundaries
+and release/rollback discipline. These strengthen the design without authorizing
+cloud spending, system-wide software changes or personal-data migration.

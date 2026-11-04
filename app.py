@@ -13,6 +13,7 @@ from voice_output import speak_button
 from ui_theme import render_command_centre, render_avatar, window_title
 from dashboard_panels import render_system_monitor
 from activity_log import record_activity, reply_failed
+from local_ai import inspect_local_ai, hardware_readiness
 
 
 def render_memory_controls():
@@ -59,7 +60,7 @@ assistant_name=st.session_state.get("assistant_name", os.getenv("JARVIS_NAME", "
 personality=st.session_state.get("personality", "Helpful and concise")
 reduced_motion=st.session_state.get("reduced_motion", False)
 live_monitoring=st.session_state.get("live_monitoring", True)
-provider=os.getenv("JARVIS_PROVIDER", "ollama").strip().lower()
+provider=st.session_state.get("provider_override") or os.getenv("JARVIS_PROVIDER", "ollama").strip().lower()
 with st.sidebar:
     st.markdown("### JARVIS / SESSION")
     st.metric("AI ENGINE", provider.upper())
@@ -139,6 +140,32 @@ with right:
                 st.caption("CPU, RAM, storage, battery and adapter counters are read locally every two seconds. Network link is not an internet availability test. Temperature is N/A when Windows exposes no sensor.")
                 st.caption("Current AI provider: "+provider+". This setting is not a connection-health guarantee.")
                 st.caption("Gemini model: "+os.getenv("GEMINI_MODEL","gemini-flash-lite-latest"))
+                st.divider()
+                st.markdown("#### Local AI readiness")
+                if st.button("Check local AI", key="check_local_ai"):
+                    st.session_state.local_ai_status = inspect_local_ai()
+                    st.session_state.local_hardware = hardware_readiness()
+                    record_activity(st.session_state, "Local AI checked")
+                status = st.session_state.get("local_ai_status")
+                if status:
+                    st.info(status["message"])
+                    hardware = st.session_state.get("local_hardware", {})
+                    st.caption(f"RAM available: {hardware.get('ram_available_gib', 'N/A')} GiB · Storage free: {hardware.get('disk_free_gib', 'N/A')} GiB")
+                    st.caption(hardware.get("advice", ""))
+                    if status["models"]:
+                        selected_model = st.selectbox("Installed local model", status["models"], key="local_model_choice")
+                        if st.button("Use local AI for this session"):
+                            st.session_state.provider_override = "ollama"
+                            st.session_state.local_model_override = selected_model
+                            record_activity(st.session_state, "Session provider changed", "local")
+                            st.rerun()
+                if st.session_state.get("provider_override"):
+                    st.caption("Session override active. Your .env has not changed.")
+                    if st.button("Return to configured provider"):
+                        st.session_state.pop("provider_override", None)
+                        st.session_state.pop("local_model_override", None)
+                        record_activity(st.session_state, "Session provider restored")
+                        st.rerun()
         with settings_tile:
             with st.popover("Settings",icon=":material/settings:",width="stretch"):
                 st.markdown("### Personal settings")
@@ -161,7 +188,7 @@ if prompt:
         render_avatar("thinking",reduced_motion)
     with right:
         with st.spinner(f"{assistant_name} is thinking…"):
-            reply=generate_reply(st.session_state.chat,list_memories(),assistant_name,personality)
+            reply=generate_reply(st.session_state.chat,list_memories(),assistant_name,personality,provider=provider,local_model=st.session_state.get("local_model_override"))
     st.session_state.chat.append({"role":"assistant","content":reply})
     failed=reply_failed(reply)
     st.session_state.assistant_state="error" if failed else "ready"
