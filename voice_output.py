@@ -48,7 +48,7 @@ function refreshVoices() {{
   if (!localVoices.length) status.textContent = 'No local voice available. No cloud voice will be used.';
   else if (status.textContent.startsWith('No local voice')) status.textContent = 'Ready';
 }}
-if ('speechSynthesis' in window) {{ refreshVoices(); speechSynthesis.addEventListener('voiceschanged', refreshVoices); }}
+if ('speechSynthesis' in window) {{ refreshVoices(); speechSynthesis.addEventListener?.('voiceschanged', refreshVoices); }}
 let current;
 let stopped = false;
 let previewTimer = null;
@@ -93,7 +93,7 @@ document.getElementById('speak').onclick = () => {{
   utterance.onend = () => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Finished'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
   utterance.onerror = (event) => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Speech error: ' + event.error; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
   status.textContent = 'Starting…';
-  speechSynthesis.speak(utterance);
+  try {{ speechSynthesis.speak(utterance); }} catch (error) {{ if (current === utterance) {{ current = null; stopPreview(); status.textContent = 'Speech could not start'; }} }}
 }};
 document.getElementById('pause').onclick = () => {{
   if ('speechSynthesis' in window && current && speechSynthesis.speaking && !speechSynthesis.paused) {{ speechSynthesis.pause(); stopPreview(); status.textContent = 'Paused'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'paused'}})); }}
