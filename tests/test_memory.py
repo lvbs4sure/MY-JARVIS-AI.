@@ -27,6 +27,23 @@ class MemoryTests(unittest.TestCase):
             finally:
                 memory_store.DB_PATH = original
 
+    def test_reject_oversized_memory(self):
+        with self.assertRaises(ValueError):
+            memory_store.add_memory("x" * 2001)
+
+    def test_reject_blank_update_without_modifying_data(self):
+        with tempfile.TemporaryDirectory() as folder:
+            original = memory_store.DB_PATH
+            try:
+                memory_store.DB_PATH = Path(folder) / "notes.db"
+                memory_store.add_memory("keep me")
+                memory_id = memory_store.list_memories()[0][0]
+                with self.assertRaises(ValueError):
+                    memory_store.update_memory(memory_id, "  ")
+                self.assertEqual(memory_store.list_memories()[0][1], "keep me")
+            finally:
+                memory_store.DB_PATH = original
+
     def test_reject_blank_memory(self):
         with self.assertRaises(ValueError):
             memory_store.add_memory("   ")
