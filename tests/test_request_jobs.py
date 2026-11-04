@@ -65,4 +65,3 @@ class RequestTests(unittest.TestCase):
             self.assertFalse(app.exception)
             self.assertEqual(app.session_state["chat"],[])
             reply.assert_not_called()
-
