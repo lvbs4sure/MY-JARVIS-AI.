@@ -20,7 +20,7 @@ def finish_request(state):
         return True
     if job.kind == "voice":
         text, error = (None, result.message) if isinstance(result, JobFailure) else (result if isinstance(result, tuple) and len(result) == 2 else (None, "Invalid transcription response."))
-        if error or not text or not text.strip():
+        if error or not isinstance(text, str) or not text.strip():
             state["voice_error"] = error or "No speech recognized. Please record again."
             state["voice_digest"] = None
             state["assistant_state"] = "error"
@@ -33,7 +33,7 @@ def finish_request(state):
             record_activity(state, "Voice transcribed")
         return True
     if isinstance(result, JobFailure) or not isinstance(result, ReplyResult):
-        result = ReplyResult("The request could not complete. Retry manually.", False, job.metadata["provider"], "unexpected", True)
+        result = ReplyResult("The request could not complete. Retry manually.", False, job.metadata.get("provider", "unknown"), "unexpected", True)
     state["chat"].append({"role":"assistant", "content":result.text, "ok":result.ok,
         "retryable":result.retryable, "request_provider":job.metadata["provider"],
         "request_model":job.metadata.get("local_model")})
