@@ -92,6 +92,11 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("No spoken text in this reply.", markup)
         self.assertIn("String(event.error || 'unknown')", markup)
 
+    def test_rate_is_bounded_before_browser_playback(self):
+        markup = self.render("Hello")
+        self.assertIn("Number.isFinite(requestedRate)", markup)
+        self.assertIn("Math.max(0.5, Math.min(2, requestedRate))", markup)
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
