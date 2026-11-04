@@ -31,6 +31,37 @@ class AITests(unittest.TestCase):
                 self.assertEqual(generate_reply([{"role": "user", "content": "hi"}], []), "Hello!")
                 self.assertEqual(urlopen.call_args.args[0].full_url, "http://127.0.0.1:11434/api/chat")
 
+    def test_unknown_provider_rejected_without_network(self):
+        with patch.dict(os.environ, {"JARVIS_PROVIDER": "unexpected"}):
+            with patch("jarvis_ai.request.urlopen") as network:
+                reply = generate_reply([], [])
+                self.assertIn("Invalid JARVIS_PROVIDER", reply)
+                network.assert_not_called()
+
+    def test_ollama_request_contains_personal_context_locally(self):
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps({"message": {"content": "Green."}}).encode()
+        mock_response.__enter__.return_value = mock_response
+        with patch.dict(os.environ, {"OLLAMA_URL": "http://127.0.0.1:11434", "JARVIS_PROVIDER": "ollama"}):
+            with patch("jarvis_ai.request.urlopen", return_value=mock_response) as network:
+                reply = generate_reply(
+                    [{"role": "user", "content": "What is my colour?"}],
+                    [(1, "My favourite colour is green", "now")],
+                    name="My Assistant",
+                )
+                self.assertEqual(reply, "Green.")
+                payload = json.loads(network.call_args.args[0].data)
+                self.assertEqual(payload["messages"][0]["role"], "system")
+                self.assertIn("My favourite colour is green", payload["messages"][0]["content"])
+                self.assertIn("My Assistant", payload["messages"][0]["content"])
+                self.assertEqual(payload["messages"][-1]["role"], "user")
+
+    def test_voice_rejects_oversized_recording_before_api_call(self):
+        with patch.dict(os.environ, {"JARVIS_VOICE_PROVIDER": "gemini", "GEMINI_API_KEY": "placeholder"}):
+            result, message = transcribe_audio(b"x" * 8_000_001)
+            self.assertIsNone(result)
+            self.assertIn("too large", message)
+
 
 if __name__ == "__main__":
     unittest.main()
