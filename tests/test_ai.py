@@ -107,6 +107,36 @@ class AITests(unittest.TestCase):
         self.assertIsNone(result)
         self.assertIn("interrupted", message)
 
+    def test_cancelled_voice_failure_is_reported_as_interruption(self):
+        from threading import Event
+
+        stopped = Event()
+
+        def fail_after_stop(*args, **kwargs):
+            stopped.set()
+            return None, ("provider error", "service", True, 503)
+
+        with patch.dict(os.environ, {"JARVIS_VOICE_PROVIDER": "gemini", "GEMINI_API_KEY": "test-key"}):
+            with patch("jarvis_ai._gemini_content", side_effect=fail_after_stop):
+                result, message = transcribe_audio(b"sample", cancel_event=stopped)
+        self.assertIsNone(result)
+        self.assertEqual(message, "Voice request interrupted.")
+
+    def test_cancelled_voice_exception_is_reported_as_interruption(self):
+        from threading import Event
+
+        stopped = Event()
+
+        def raise_after_stop(*args, **kwargs):
+            stopped.set()
+            raise RuntimeError("late provider failure")
+
+        with patch.dict(os.environ, {"JARVIS_VOICE_PROVIDER": "gemini", "GEMINI_API_KEY": "test-key"}):
+            with patch("jarvis_ai._gemini_content", side_effect=raise_after_stop):
+                result, message = transcribe_audio(b"sample", cancel_event=stopped)
+        self.assertIsNone(result)
+        self.assertEqual(message, "Voice request interrupted.")
+
     def test_unknown_provider_rejected_without_network(self):
         with patch.dict(os.environ, {"JARVIS_PROVIDER": "unexpected"}):
             with patch("jarvis_ai._local_urlopen") as network:
