@@ -61,7 +61,7 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("utterance.onend = () => { stopPreview();", markup)
         self.assertIn("utterance.onerror = (event) => { stopPreview();", markup)
         self.assertIn("speechSynthesis.pause(); stopPreview();", markup)
-        self.assertIn("stopped = true;\\n  stopPreview();", markup)
+        self.assertIn("stopped = true;\n  stopPreview();", markup)
         self.assertIn("prefers-reduced-motion: reduce", markup)
         self.assertIn("not exact lip-sync", markup)
 
