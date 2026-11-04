@@ -1,5 +1,5 @@
 """Read-only local telemetry. No network requests, process inspection or elevation."""
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 import math
 import platform
@@ -11,7 +11,6 @@ try:
 except ImportError:
     psutil = None
 
-LAGOS = timezone(timedelta(hours=1), "Africa/Lagos")
 SAFE_ERRORS = (OSError, RuntimeError, ValueError, TypeError, AttributeError, NotImplementedError)
 if psutil is not None:
     SAFE_ERRORS += (psutil.Error,)
@@ -34,7 +33,7 @@ class SystemMonitor:
 
     def sample(self):
         result = {key: "N/A" for key in ("cpu", "ram", "disk", "battery", "network", "download", "upload", "temperature", "power", "disk_free", "ram_detail")}
-        result.update(time=datetime.now(LAGOS).strftime("%H:%M:%S"), platform=platform.system(), cpu_percent=None, ram_percent=None)
+        result.update(time=datetime.now().astimezone().strftime("%H:%M:%S"), platform=platform.system(), cpu_percent=None, ram_percent=None)
         api = self.api
         if api is not None:
             try:
