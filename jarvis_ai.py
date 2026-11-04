@@ -117,6 +117,8 @@ def _gemini_content(key, contents, model, cancel_event=None, *, timeout_ms=15000
                         continue
                     return None, failure
     except Exception as exc:
+        if cancel_event is not None and cancel_event.is_set():
+            return None, cancelled
         return None, _failure(exc)
 
 
@@ -171,6 +173,9 @@ def generate_reply(messages, memories, name="JARVIS", personality="Helpful and c
             return finish(text + " Local fallback failed: " + local_error, False, kind, retryable, status)
         return finish(text, False, kind, retryable, status)
     answer = response.text if isinstance(response.text, str) else ""
+    # A stop may arrive while the SDK exposes the response text.
+    if cancel_event is not None and cancel_event.is_set():
+        return finish("Request interrupted.", False, "cancelled")
     if not answer.strip():
         return finish("Gemini returned an empty response. Your message was not answered; please retry.", False, "empty", True)
     return finish(answer)
