@@ -102,6 +102,17 @@ class MemoryTests(unittest.TestCase):
                             memory_store.delete_memory(invalid)
                 self.assertEqual(memory_store.list_memories()[0][1], "keep this")
 
+    def test_search_rejects_invalid_limits_even_when_query_is_blank(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(memory_store, "DB_PATH", Path(folder) / "search_limits.db"):
+                memory_store.add_memory("unchanged")
+                for query in ("", "   ", "unchanged"):
+                    for limit in (0, -1, 101, True, 1.5, "5", None):
+                        with self.subTest(query=query, limit=repr(limit)):
+                            with self.assertRaises(ValueError):
+                                memory_store.search_memories(query, limit)
+                self.assertEqual(memory_store.list_memories()[0][1], "unchanged")
+
     def test_reject_blank_memory(self):
         with self.assertRaises(ValueError):
             memory_store.add_memory("   ")
