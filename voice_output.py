@@ -77,6 +77,7 @@ document.getElementById('speak').onclick = () => {{
   if (!('speechSynthesis' in window)) {{ status.textContent = 'Speech is unavailable in this browser.'; return; }}
   const selectedVoice = localVoices.find(voice => voice.voiceURI === voiceMenu.value);
   if (!selectedVoice) {{ status.textContent = 'Select an installed local voice first.'; return; }}
+  if (!message.trim()) {{ status.textContent = 'No spoken text in this reply.'; return; }}
   current = null;
   speechSynthesis.cancel();
   stopPreview();
@@ -91,7 +92,7 @@ document.getElementById('speak').onclick = () => {{
   utterance.onpause = () => {{ if (current !== utterance || stopped) return; stopPreview(); status.textContent = 'Paused'; }};
   utterance.onresume = () => {{ if (current !== utterance || stopped) return; active = true; status.textContent = 'Speaking'; }};
   utterance.onend = () => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Finished'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
-  utterance.onerror = (event) => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Speech error: ' + event.error; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
+  utterance.onerror = (event) => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Speech error: ' + String(event.error || 'unknown'); window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
   status.textContent = 'Starting…';
   try {{ speechSynthesis.speak(utterance); }} catch (error) {{ if (current === utterance) {{ current = null; stopPreview(); status.textContent = 'Speech could not start'; }} }}
 }};
