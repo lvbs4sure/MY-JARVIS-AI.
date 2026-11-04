@@ -1,7 +1,7 @@
 """Pure tests: facial signals must not masquerade as a rendered avatar."""
 import unittest
 
-from face_motion import FaceMotionController
+from face_motion import FaceMotionController, FacePose, rig_controls
 from lip_sync import LipTimeline, VisemeCue
 
 
@@ -40,6 +40,22 @@ class FaceMotionTests(unittest.TestCase):
                                   reduced_motion=True)
         self.assertEqual((pose.blink, pose.gaze_x, pose.gaze_y, pose.mouth_open),
                          (0, 0, 0, 0))
+
+    def test_rig_controls_are_named_and_normalized(self):
+        pose = self.motion.sample(90)
+        controls = rig_controls(pose)
+        self.assertEqual(controls["blink_left"], 1)
+        self.assertEqual(controls["blink_right"], 1)
+        self.assertEqual(controls["mouth_open"], 0)
+        self.assertTrue(-1 <= controls["gaze_horizontal"] <= 1)
+
+    def test_rig_controls_reject_invalid_values(self):
+        with self.assertRaises(TypeError):
+            rig_controls({})
+        with self.assertRaises(ValueError):
+            rig_controls(FacePose(2, 0, 0, 0, "ready"))
+        with self.assertRaises(ValueError):
+            rig_controls(FacePose(0, float("nan"), 0, 0, "ready"))
 
     def test_rejects_bad_clock_states_and_flags(self):
         with self.assertRaises(ValueError):
