@@ -5,10 +5,11 @@ from voice_output import speak_button
 
 class VoiceTests(unittest.TestCase):
     def render(self, text, label="🔊 Speak reply"):
-        with patch("voice_output.st.iframe") as render:
+        with patch("voice_output.components.html") as render:
             speak_button(text, label)
             render.assert_called_once()
             self.assertEqual(render.call_args.kwargs["height"], 315)
+            self.assertTrue(render.call_args.kwargs["scrolling"])
             return render.call_args.args[0]
 
     def test_escapes_script_tags_in_reply(self):
