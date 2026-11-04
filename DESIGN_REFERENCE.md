@@ -12,3 +12,13 @@ Final generation prompt:
 Live panels are native controls and escaped local HTML, not flattened artwork.
 Gauge and sparkline values come from the monitoring module. The artwork and
 scan/glow overlays are decorative and are not a measured microphone waveform.
+
+## Owner clarification — 2026-11-04
+
+The owner explicitly reaffirmed this photorealistic blue-violet female JARVIS
+scene as the desired face and appearance. KAVI/MARK IV references are for
+capabilities (camera, conversation history, research, microphone and interrupt),
+not permission to replace the face or redesign the character. Keep this scene
+as the active default. Do not substitute the experimental wireframe avatar
+without a new explicit request from the owner. Add functional features around
+the approved scene and preserve the compact research/file section.

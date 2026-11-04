@@ -47,9 +47,10 @@ class EmbodimentTests(unittest.TestCase):
             self.assertFalse(app.exception)
             self.assertEqual(camera.call_count,1)
 
-    def test_original_scene_remains_selectable(self):
+    def test_original_scene_is_preserved_even_with_stale_avatar_choice(self):
         with tempfile.TemporaryDirectory() as folder,patch.object(memory_store,'DB_PATH',Path(folder)/'test.db'):
             app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'app.py'),default_timeout=15).run()
-            app.selectbox(key='avatar_style').select('Holographic scene').run()
+            app.session_state['avatar_style']='Animated wireframe face'
+            app.run()
             self.assertFalse(app.exception)
             self.assertTrue(any('Photorealistic holographic' in item.value for item in app.markdown))

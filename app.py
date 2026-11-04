@@ -3,6 +3,7 @@ from pathlib import Path
 import hashlib
 import os
 import re
+import sqlite3
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -12,7 +13,7 @@ from jarvis_ai import generate_reply_result, transcribe_audio
 from voice_output import speak_button
 from file_preview import preview_upload
 from camera_preview import render_camera_preview
-from animated_avatar import render_moving_face
+import chat_history
 from request_jobs import RequestJob
 from conversation_flow import finish_request
 from ui_theme import render_command_centre, render_avatar, window_title
@@ -84,10 +85,8 @@ def request_controls():
 
 
 st.set_page_config(page_title="JARVIS", page_icon="◈", layout="wide", initial_sidebar_state="collapsed")
-avatar_style=st.session_state.get("avatar_style","Animated wireframe face")
+avatar_style="Holographic scene"
 render_command_centre()
-if avatar_style=="Animated wireframe face":
-    st.markdown("<style>.stApp{background:#030814 radial-gradient(ellipse at 50% 40%,#06364766,transparent 65%)} </style>",unsafe_allow_html=True)
 st.session_state.setdefault("chat", [])
 st.session_state.setdefault("voice_digest", None)
 st.session_state.setdefault("assistant_state", "ready")
@@ -111,17 +110,46 @@ with st.sidebar:
     st.metric("SESSION MESSAGES", len(st.session_state.chat))
     st.caption("Use the floating Shortcuts panel for memory, voice, system and settings.")
     st.caption("This installation is private and single-user. Gemini chat sends conversation and saved context to Google; telemetry stays local.")
+    with st.expander("Chat history"):
+        st.toggle("Save chat history on this device",key="save_chat_history")
+        st.caption("Off by default. Saves chat text locally in this new installation only; never audio, camera images or files. Configured API keys are masked. Saved chats are not sent to AI until you send another message.")
+        try:
+            chat_history.sync_history(st.session_state)
+            saved_chats=chat_history.list_conversations()
+            if st.button("New conversation",key="new_conversation",disabled=busy):
+                st.session_state.chat=[]
+                for history_key in ("history_id","history_snapshot","last_request","voice_error"):
+                    st.session_state.pop(history_key,None)
+                st.session_state.assistant_state="ready"
+                record_activity(st.session_state,"New conversation")
+                st.rerun()
+            if saved_chats:
+                titles={row[0]:f"{row[1]} · {row[2][:10]}" for row in saved_chats}
+                selected_chat=st.selectbox("Saved conversations",list(titles),format_func=titles.get,key="selected_history")
+                if st.button("Open saved conversation",key="open_history",disabled=busy):
+                    restored=chat_history.load_conversation(selected_chat)
+                    if restored is None:
+                        st.warning("That saved conversation is no longer available.")
+                    else:
+                        st.session_state.chat=restored
+                        st.session_state.history_id=selected_chat
+                        st.session_state.history_snapshot=None
+                        st.session_state.assistant_state="ready"
+                        st.session_state.pop("last_request",None)
+                        record_activity(st.session_state,"Saved conversation opened")
+                        st.rerun()
+            else:
+                st.caption("No saved conversations. Enable local saving to keep new chats after restarting.")
+        except (ValueError,OSError,sqlite3.Error):
+            st.warning("Chat history could not be saved or opened. This session and existing saved history remain available. History is limited to 1,000 messages and 2 MB per conversation.")
+
 left, centre, right=st.columns([1, 1.15, 1], gap="large")
 with left:
     render_system_monitor(live_monitoring)
 with centre:
     avatar_mount=st.empty()
     with avatar_mount.container():
-        if avatar_style=="Animated wireframe face":
-            latest_spoken=next((m["content"] for m in reversed(st.session_state.chat) if m["role"]=="assistant" and m.get("ok",True)),"")
-            render_moving_face(latest_spoken,st.session_state.assistant_state,reduced_motion)
-        else:
-            render_avatar(st.session_state.assistant_state,reduced_motion)
+        render_avatar(st.session_state.assistant_state,reduced_motion)
 with right:
     with st.container(key="chat_window"):
         window_title("AI chat interface")
@@ -267,7 +295,7 @@ with right:
                 st.markdown("### Personal settings")
                 assistant_name=st.text_input("Assistant name",os.getenv("JARVIS_NAME","JARVIS"),key="assistant_name",max_chars=50).strip() or "JARVIS"
                 personality=st.selectbox("Personality",["Helpful and concise","Friendly and encouraging","Professional and precise","Curious and creative"],key="personality")
-                st.selectbox("Avatar style",["Animated wireframe face","Holographic scene"],key="avatar_style")
+                st.caption("Your original holographic JARVIS appearance is preserved.")
                 st.toggle("Show local camera controls",key="show_local_camera")
                 st.caption("Camera preview stays in this browser. JARVIS visual understanding is not enabled.")
                 st.toggle("Reduce animation",key="reduced_motion")
@@ -275,28 +303,30 @@ with right:
                     st.warning("Only this session's chat is cleared. Saved memories remain.")
                     if st.button("Confirm clear conversation"):
                         st.session_state.chat=[]
+                        st.session_state.pop("history_id",None)
+                        st.session_state.pop("history_snapshot",None)
                         record_activity(st.session_state,"Conversation cleared")
                         st.rerun()
-with centre:
-    with st.container(key="research_window"):
-        window_title("Research workspace")
-        st.caption("RESEARCH / DISCONNECTED")
-        st.markdown("Research results will appear here with sources and timestamps when a research provider is connected.")
-        st.info("Live web research is not connected yet. JARVIS will not invent search results or sources.")
 with right:
-    with st.container(key="file_window"):
-        window_title("Selected file preview")
-        selected_file = st.file_uploader("Choose a file to inspect", type=["txt", "md", "csv"], key="kavi_file_preview", max_upload_size=1)
-        if selected_file is not None:
-            try:
-                filename, preview_text, byte_count, truncated = preview_upload(selected_file)
-                st.text(f"{filename} · {byte_count:,} bytes")
-                st.caption("Local preview only. Never executed, saved to disk, or sent to AI.")
-                st.text_area("File contents (read-only preview)", value=preview_text, height=160, disabled=True)
-                if truncated:
-                    st.caption("Showing the first 4,000 characters.")
-            except ValueError as exc:
-                st.warning(str(exc))
+    with st.expander("Research and selected-file preview"):
+        with st.container(key="research_window"):
+            window_title("Research workspace")
+            st.caption("RESEARCH / DISCONNECTED")
+            st.markdown("Research results will appear here with sources and timestamps when a research provider is connected.")
+            st.info("Live web research is not connected yet. JARVIS will not invent search results or sources.")
+        with st.container(key="file_window"):
+            window_title("Selected file preview")
+            selected_file = st.file_uploader("Choose a file to inspect", type=["txt", "md", "csv"], key="kavi_file_preview", max_upload_size=1)
+            if selected_file is not None:
+                try:
+                    filename, preview_text, byte_count, truncated = preview_upload(selected_file)
+                    st.text(f"{filename} · {byte_count:,} bytes")
+                    st.caption("Local preview only. Never executed, saved to disk, or sent to AI.")
+                    st.text_area("File contents (read-only preview)", value=preview_text, height=160, disabled=True)
+                    if truncated:
+                        st.caption("Showing the first 4,000 characters.")
+                except ValueError as exc:
+                    st.warning(str(exc))
 if st.session_state.get("show_local_camera"):
     with right:
         with st.container(key="camera_window"):

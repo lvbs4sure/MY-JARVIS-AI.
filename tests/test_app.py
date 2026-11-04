@@ -29,7 +29,7 @@ class AppTests(unittest.TestCase):
                 self.assertFalse(app.exception)
                 self.assertEqual(app.session_state["assistant_state"], "error")
                 self.assertEqual(app.session_state["activity"][-1]["outcome"], "failed")
-                self.assertTrue(any('needs attention' in item.proto.srcdoc for item in app.get('iframe')))
+                self.assertTrue(any('state-error' in item.value for item in app.markdown))
 
     def test_voice_consent_send_and_duplicate_guard(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -61,7 +61,7 @@ class AppTests(unittest.TestCase):
             with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"):
                 app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=10).run()
                 app.text_area[0].set_value("Test memory: favourite fruit is mango")
-                app.button[0].click().run()
+                next(button for button in app.button if button.label=="Save memory").click().run()
                 self.assertFalse(app.exception)
                 identity = memory_store.list_memories()[0][0]
                 app.text_input(key="memory_search").set_value("mango").run()
