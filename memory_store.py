@@ -45,3 +45,24 @@ def delete_memory(memory_id: int) -> bool:
     with connect() as db:
         result = db.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
         return result.rowcount > 0
+
+
+def search_memories(query: str, limit: int = 20):
+    """Search private notes without exposing them to an external search service."""
+    if not isinstance(query, str):
+        raise ValueError("Search must be text.")
+    query = query.strip()
+    if not query:
+        return []
+    if len(query) > 200:
+        raise ValueError("Search must be at most 200 characters.")
+    if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100:
+        raise ValueError("Search limit must be between 1 and 100.")
+    # Escape LIKE wildcards so a user's % or _ is treated literally.
+    escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    with connect() as db:
+        return db.execute(
+            "SELECT id, note, created_at FROM memories "
+            "WHERE note LIKE ? ESCAPE '\\' ORDER BY id DESC LIMIT ?",
+            (f"%{escaped}%", limit),
+        ).fetchall()
