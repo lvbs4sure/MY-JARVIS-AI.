@@ -169,6 +169,24 @@ class MemoryTests(unittest.TestCase):
                 memory_store.add_memory("existing note")
             self.assertEqual(database.stat().st_mode & 0o777, 0o640)
 
+    def test_symlinked_database_is_rejected_without_changing_target(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder) / "owner.db"
+            link = Path(folder) / "friend.db"
+            with patch.object(memory_store, "DB_PATH", target):
+                memory_store.add_memory("owner private note")
+            try:
+                link.symlink_to(target)
+            except (OSError, NotImplementedError):
+                self.skipTest("Creating symbolic links is unavailable")
+            with patch.object(memory_store, "DB_PATH", link):
+                with self.assertRaises(ValueError):
+                    memory_store.list_memories()
+                with self.assertRaises(ValueError):
+                    memory_store.add_memory("friend note")
+            with patch.object(memory_store, "DB_PATH", target):
+                self.assertEqual([row[1] for row in memory_store.list_memories()], ["owner private note"])
+
     def test_reject_blank_memory(self):
         with self.assertRaises(ValueError):
             memory_store.add_memory("   ")
