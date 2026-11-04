@@ -24,3 +24,9 @@ The original creator controls this starter repository. Friends can **fork or cop
 5. **Advanced abilities:** explicit user-approved integrations and actions with permissions and audit logs.
 
 Voice output, hosted accounts, and autonomous computer control are **not implemented**. Decisions from earlier architecture discussions should be added here when verified, rather than guessed.
+
+## Voice privacy decision (2026-11-04)
+Recording in the browser does **not** trigger a network transcription request by itself. The user must press **Transcribe recording with Gemini (uploads audio)**. Transcription also requires `JARVIS_VOICE_PROVIDER=gemini` and a private Gemini key. Spoken replies use the browser speech synthesis feature and do not require uploading the response to a speech provider.
+
+## Validation status
+Unit tests are committed, but a passing GitHub Actions run has not yet been observed. Do not treat the application as production-ready. In particular, test the microphone consent flow and browser speech synthesis in an actual browser before distributing the app.
