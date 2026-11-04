@@ -20,6 +20,10 @@ def connect():
 
 
 def add_memory(note: str) -> None:
+    if not isinstance(note, str):
+        raise ValueError("Memory must be text.")
+    if not isinstance(note, str):
+        raise ValueError("Memory must be text.")
     note = note.strip()
     if not note or len(note) > 2000:
         raise ValueError("Memory must contain 1–2000 characters.")
@@ -28,6 +32,8 @@ def add_memory(note: str) -> None:
 
 
 def list_memories(limit: int = 100):
+    if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 1000:
+        raise ValueError("Memory list limit must be between 1 and 1000.")
     with connect() as db:
         return db.execute("SELECT id, note, created_at FROM memories ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
 
