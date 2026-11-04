@@ -80,6 +80,8 @@ def transcribe_audio(audio_bytes: bytes):
     key = os.getenv("GEMINI_API_KEY", "").strip()
     if not key:
         return None, "Voice transcription needs GEMINI_API_KEY."
+    if not isinstance(audio_bytes, bytes) or not audio_bytes:
+        return None, "Recording is empty or invalid; please record audio first."
     if len(audio_bytes) > 8_000_000:
         return None, "Recording too large; please record a shorter message."
     try:
