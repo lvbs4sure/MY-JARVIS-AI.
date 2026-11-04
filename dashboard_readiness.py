@@ -28,6 +28,7 @@ def dashboard_readiness(provider=None, environ=None, *, free_ram_bytes=None, loc
         else ("blocked", "Transcription disabled. Requires JARVIS_VOICE_PROVIDER=gemini and GEMINI_API_KEY.")
     )
     result["history"] = ("optional", "Chat history stays on this device and is saved only when you enable it.")
+    result["files"] = ("local-preview", "Text, Markdown and CSV previews remain local; files are not sent to AI by previewing.")
     result["speech"] = ("browser", "Local speech needs an installed browser voice and a user click. Use Voice > Test local spoken replies.")
     result["avatar"] = ("static", "Original holographic artwork is static; facial rig and renderer not connected.")
     result["camera"] = ("local-preview", "Camera preview is local-only and requires an explicit Start action; image understanding is not connected.")
