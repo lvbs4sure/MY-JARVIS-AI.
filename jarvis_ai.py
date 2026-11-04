@@ -89,25 +89,38 @@ def _failure(exc):
     return (f"Gemini request failed ({type(exc).__name__}). Check configuration.", "unexpected", False, None)
 
 
-def _gemini_content(key, contents, model):
+def _gemini_content(key, contents, model, cancel_event=None, *, timeout_ms=15000, attempts=2):
     from google import genai
+    cancelled = ("Request interrupted. A request already sent cannot be recalled.", "cancelled", False, None)
+    if cancel_event is not None and cancel_event.is_set():
+        return None, cancelled
     # Retry ourselves so SDK retry logs cannot expose exception bodies/credentials.
     try:
-        with genai.Client(api_key=key, http_options={"timeout": 15000, "retry_options": {"attempts": 1}}) as client:
-            for attempt in range(2):
+        with genai.Client(api_key=key, http_options={"timeout": timeout_ms, "retry_options": {"attempts": 1}}) as client:
+            for attempt in range(attempts):
                 try:
-                    return client.models.generate_content(model=model, contents=contents), None
+                    if cancel_event is not None and cancel_event.is_set():
+                        return None, cancelled
+                    response = client.models.generate_content(model=model, contents=contents)
+                    if cancel_event is not None and cancel_event.is_set():
+                        return None, cancelled
+                    return response, None
                 except Exception as exc:
+                    if cancel_event is not None and cancel_event.is_set():
+                        return None, cancelled
                     failure = _failure(exc)
-                    if attempt == 0 and failure[1] in ("network", "timeout", "service"):
-                        time.sleep(0.5)
+                    if attempt + 1 < attempts and failure[1] in ("network", "timeout", "service"):
+                        if cancel_event is None:
+                            time.sleep(0.5)
+                        elif cancel_event.wait(0.5):
+                            return None, cancelled
                         continue
                     return None, failure
     except Exception as exc:
         return None, _failure(exc)
 
 
-def generate_reply(messages, memories, name="JARVIS", personality="Helpful and concise", provider=None, local_model=None, _structured=False):
+def generate_reply(messages, memories, name="JARVIS", personality="Helpful and concise", provider=None, local_model=None, _structured=False, cancel_event=None):
     provider = (provider or os.getenv("JARVIS_PROVIDER", "ollama")).lower().strip()
     began = time.monotonic()
 
@@ -115,6 +128,8 @@ def generate_reply(messages, memories, name="JARVIS", personality="Helpful and c
         result = ReplyResult(text, ok, actual_provider or provider, kind, retryable, status, round((time.monotonic() - began) * 1000))
         return result if _structured else result.text
 
+    if cancel_event is not None and cancel_event.is_set():
+        return finish("Request interrupted.", False, "cancelled")
     if provider == "ollama":
         response, error_message = ollama_reply(messages, memories, name, personality, model=local_model)
         if response:
@@ -133,12 +148,14 @@ def generate_reply(messages, memories, name="JARVIS", personality="Helpful and c
                 "Never claim to have performed actions.\n"
                 f"Saved notes:\n{notes}\nConversation:\n{history}\nAssistant:")
     try:
-        response, failure = _gemini_content(key, contents, os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest"))
+        response, failure = _gemini_content(key, contents, os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest"), cancel_event=cancel_event)
     except Exception as exc:
         failure = _failure(exc)
         response = None
     if failure:
         text, kind, retryable, status = failure
+        if cancel_event is not None and cancel_event.is_set():
+            return finish("Request interrupted.", False, "cancelled")
         if retryable and os.getenv("JARVIS_OLLAMA_FALLBACK", "off").strip().lower() == "on":
             answer, local_error = ollama_reply(messages, memories, name, personality)
             if answer:
@@ -157,8 +174,10 @@ def generate_reply_result(*args, **kwargs):
     return result if isinstance(result, ReplyResult) else legacy_result(result, kwargs.get("provider") or os.getenv("JARVIS_PROVIDER", "ollama"))
 
 
-def transcribe_audio(audio_bytes: bytes, *, muted=False):
+def transcribe_audio(audio_bytes: bytes, *, muted=False, cancel_event=None):
     """Voice transcription is opt-in and requires Gemini; never silently upload audio."""
+    if cancel_event is not None and cancel_event.is_set():
+        return None, "Voice request interrupted."
     if muted:
         return None, "Microphone muted. Transcription is blocked."
     if os.getenv("JARVIS_VOICE_PROVIDER", "off").lower() != "gemini":
@@ -175,7 +194,7 @@ def transcribe_audio(audio_bytes: bytes, *, muted=False):
         response, failure = _gemini_content(key, [
             "Transcribe this speech. Return only spoken words.",
             types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
-        ], os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest"))
+        ], os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest"), cancel_event=cancel_event, timeout_ms=30000, attempts=1)
         if failure:
             return None, "Voice transcription: " + failure[0]
         text = (response.text or "").strip()

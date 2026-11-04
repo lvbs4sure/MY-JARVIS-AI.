@@ -203,3 +203,9 @@ license conflicts, especially for a future commercial or hosted AI hub.
 
 - Integrated-panel layout correction: research/file previews remain available in a collapsed section after Shortcuts; removed the duplicate session-log panel. Main chat, code, Voice and Settings retain their original order.
 - Layout correction Windows-verified at 1280 x 800; final complete suite: 81 tests passed.
+
+### KAVI-style panels and interruptible conversation — 2026-11-04
+- Latest branch checked; c6d84f7 is already integrated. Original JARVIS face/artwork and interface retained. No KAVI or MARK LIV source/artwork copied.
+- Conversation engine: bounded session-owned background requests; credential-safe failures; cancellation suppresses retries and late replies; completed results consumed once. No raw shell or computer actions are enabled.
+- Audio transcription uses one 30-second attempt, avoiding an automatic second audio upload. Mute cancels pending transcription and rejects stale completed transcripts before an answer can start. In-flight provider requests cannot be recalled; a new request waits for the existing connection to finish.
+- Core and UI tested together on Windows: 94 automated tests passed, including cancellation races, duplicate suppression, mute, service errors, capacity limits and preview validation. Physical microphone and speaker acceptance gate remains open.

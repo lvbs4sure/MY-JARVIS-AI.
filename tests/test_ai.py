@@ -20,7 +20,7 @@ class AITests(unittest.TestCase):
                 self.assertIsNone(result)
                 self.assertIn("No speech", message)
                 create.return_value.__exit__.assert_called_once()
-                self.assertEqual(create.call_args.kwargs["http_options"]["timeout"], 15000)
+                self.assertEqual(create.call_args.kwargs["http_options"]["timeout"], 30000)
 
     def test_voice_transcription_returns_text(self):
         with patch.dict(os.environ, {"JARVIS_VOICE_PROVIDER": "gemini", "GEMINI_API_KEY": "test-key"}):
