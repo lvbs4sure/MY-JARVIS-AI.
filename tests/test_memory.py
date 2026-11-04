@@ -90,6 +90,18 @@ class MemoryTests(unittest.TestCase):
             finally:
                 memory_store.DB_PATH = original
 
+    def test_invalid_memory_ids_do_not_modify_notes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(memory_store, "DB_PATH", Path(folder) / "ids.db"):
+                memory_store.add_memory("keep this")
+                for invalid in (None, True, False, 0, -1, 1.0, "1", b"1"):
+                    with self.subTest(invalid=repr(invalid)):
+                        with self.assertRaises(ValueError):
+                            memory_store.update_memory(invalid, "overwrite")
+                        with self.assertRaises(ValueError):
+                            memory_store.delete_memory(invalid)
+                self.assertEqual(memory_store.list_memories()[0][1], "keep this")
+
     def test_reject_blank_memory(self):
         with self.assertRaises(ValueError):
             memory_store.add_memory("   ")
