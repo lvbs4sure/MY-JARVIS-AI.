@@ -28,5 +28,6 @@ def dashboard_readiness(provider=None, environ=None, *, free_ram_bytes=None, loc
     )
     result["speech"] = ("browser", "Local speech needs an installed browser voice and a user click. Use Voice > Test local spoken replies.")
     result["avatar"] = ("static", "Original holographic artwork is static; facial rig and renderer not connected.")
+    result["camera"] = ("local-preview", "Camera preview is local-only and requires an explicit Start action; image understanding is not connected.")
     result["research"] = ("disconnected", "Live research provider not connected.")
     return result
