@@ -113,6 +113,26 @@ class MemoryTests(unittest.TestCase):
                                 memory_store.search_memories(query, limit)
                 self.assertEqual(memory_store.list_memories()[0][1], "unchanged")
 
+    def test_get_memory_is_scoped_to_installation_and_validates_ids(self):
+        with tempfile.TemporaryDirectory() as folder:
+            first = Path(folder) / "first.db"
+            second = Path(folder) / "second.db"
+            with patch.object(memory_store, "DB_PATH", first):
+                memory_store.add_memory("private first installation")
+                first_id = memory_store.list_memories()[0][0]
+                self.assertEqual(memory_store.get_memory(first_id)[1], "private first installation")
+                self.assertIsNone(memory_store.get_memory(first_id + 1))
+                for invalid in (None, True, False, 0, -1, "1", 1.0):
+                    with self.subTest(invalid=repr(invalid)):
+                        with self.assertRaises(ValueError):
+                            memory_store.get_memory(invalid)
+            with patch.object(memory_store, "DB_PATH", second):
+                self.assertIsNone(memory_store.get_memory(first_id))
+                memory_store.add_memory("private second installation")
+                self.assertEqual(memory_store.get_memory(first_id)[1], "private second installation")
+            with patch.object(memory_store, "DB_PATH", first):
+                self.assertEqual(memory_store.get_memory(first_id)[1], "private first installation")
+
     def test_reject_blank_memory(self):
         with self.assertRaises(ValueError):
             memory_store.add_memory("   ")
