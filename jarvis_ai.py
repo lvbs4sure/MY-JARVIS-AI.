@@ -132,6 +132,10 @@ def generate_reply(messages, memories, name="JARVIS", personality="Helpful and c
         return finish("Request interrupted.", False, "cancelled")
     if provider == "ollama":
         response, error_message = ollama_reply(messages, memories, name, personality, model=local_model)
+        # A local request may finish after the user presses Stop. Discard its
+        # result instead of displaying a reply to an interrupted turn.
+        if cancel_event is not None and cancel_event.is_set():
+            return finish("Request interrupted.", False, "cancelled")
         if response:
             return finish(response)
         outcome = legacy_result(error_message, "ollama")
