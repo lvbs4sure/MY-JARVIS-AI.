@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent / ".env")
 from memory_store import add_memory, list_memories, update_memory, delete_memory
 from jarvis_ai import generate_reply, transcribe_audio
+from voice_output import speak_button
 
 st.set_page_config(page_title="JARVIS", page_icon="🤖", layout="wide")
 st.title("🤖 JARVIS — Your Personal AI")
@@ -51,6 +52,8 @@ with st.sidebar:
 for message in st.session_state.chat:
     with st.chat_message(message["role"]):
         st.write(message["content"])
+        if message["role"] == "assistant":
+            speak_button(message["content"])
 
 typed = st.chat_input(f"Ask {assistant_name}")
 audio = st.audio_input("Or record a voice message (sent to Gemini for transcription)")
@@ -76,3 +79,4 @@ if prompt:
     st.session_state.chat.append({"role": "assistant", "content": reply})
     with st.chat_message("assistant"):
         st.write(reply)
+        speak_button(reply)
