@@ -75,29 +75,27 @@ for message in st.session_state.chat:
             speak_button(message["content"])
 
 typed = st.chat_input(f"Ask {assistant_name}")
-audio = st.audio_input("Record voice (Gemini transcription is optional)")
+audio = st.audio_input("Record your message")
 spoken = None
 if audio is not None:
     raw = audio.getvalue()
     digest = hashlib.sha256(raw).hexdigest()
     consent = st.checkbox("Allow this recording to be uploaded to Gemini", key=f"audio_consent_{digest}")
-    if st.button("Transcribe recording with Gemini (uploads audio)", key="transcribe", disabled=not consent):
-        if digest == st.session_state.voice_digest:
-            st.info("This recording was already transcribed. Record another to retry.")
+    already_sent = digest == st.session_state.voice_digest
+    if already_sent:
+        st.caption("Recording already sent. Record a new message to continue.")
+    if st.button("Send voice message to JARVIS", key="transcribe", disabled=not consent or already_sent):
+        with st.spinner("Processing voice message..."):
+            spoken, error = transcribe_audio(raw)
+        if error:
+            st.warning(error)
+        elif spoken and spoken.strip():
+            spoken = spoken.strip()
+            st.session_state.voice_digest = digest
+            st.caption(f"Heard: {spoken}")
         else:
-            with st.spinner("Transcribing…"):
-                spoken, error = transcribe_audio(raw)
-            if error:
-                st.warning(error)
-            elif spoken:
-                st.session_state.voice_digest = digest
-                st.session_state.voice_draft = spoken
-                spoken = None
-if st.session_state.get("voice_draft"):
-    with st.form("voice_review"):
-        reviewed = st.text_area("Review transcript before sending", key="voice_draft", max_chars=4000)
-        if st.form_submit_button("Send transcript") and reviewed.strip():
-            spoken = reviewed.strip()
+            spoken = None
+            st.warning("No speech recognized. Please record again.")
 prompt = typed or spoken
 if prompt:
     st.session_state.chat.append({"role": "user", "content": prompt})
