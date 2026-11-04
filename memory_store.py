@@ -22,8 +22,6 @@ def connect():
 def add_memory(note: str) -> None:
     if not isinstance(note, str):
         raise ValueError("Memory must be text.")
-    if not isinstance(note, str):
-        raise ValueError("Memory must be text.")
     note = note.strip()
     if not note or len(note) > 2000:
         raise ValueError("Memory must contain 1–2000 characters.")
@@ -39,6 +37,8 @@ def list_memories(limit: int = 100):
 
 
 def update_memory(memory_id: int, note: str) -> bool:
+    if not isinstance(note, str):
+        raise ValueError("Memory must be text.")
     note = note.strip()
     if not note or len(note) > 2000:
         raise ValueError("Memory must contain 1–2000 characters.")
