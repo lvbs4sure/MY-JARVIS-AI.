@@ -56,6 +56,15 @@ class AITests(unittest.TestCase):
                 self.assertIn("My Assistant", payload["messages"][0]["content"])
                 self.assertEqual(payload["messages"][-1]["role"], "user")
 
+    def test_voice_rejects_empty_and_invalid_recordings_without_upload(self):
+        with patch.dict(os.environ, {"JARVIS_VOICE_PROVIDER": "gemini", "GEMINI_API_KEY": "placeholder"}):
+            with patch("builtins.__import__", wraps=__import__) as importer:
+                for recording in (b"", None, "not bytes", bytearray(b"audio")):
+                    result, message = transcribe_audio(recording)
+                    self.assertIsNone(result)
+                    self.assertIn("empty or invalid", message)
+                self.assertFalse(any(call.args[0] == "google" for call in importer.call_args_list))
+
     def test_voice_rejects_oversized_recording_before_api_call(self):
         with patch.dict(os.environ, {"JARVIS_VOICE_PROVIDER": "gemini", "GEMINI_API_KEY": "placeholder"}):
             result, message = transcribe_audio(b"x" * 8_000_001)
