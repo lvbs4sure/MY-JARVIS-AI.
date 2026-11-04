@@ -99,3 +99,24 @@ def rig_controls(pose: FacePose) -> Mapping[str, float]:
         "gaze_vertical": pose.gaze_y,
         "mouth_open": pose.mouth_open,
     }
+
+
+def viseme_rig_controls(timeline, audio_position_ms, *, playing=False,
+                        interrupted=False):
+    """Return 22 exclusive SAPI viseme blendshape weights for a reviewed rig.
+
+    Unlike mouth_open, these preserve the individual phonetic shape IDs.
+    Only a same-clip timeline and actual playback clock can drive them.
+    This adapter is not a renderer and does not fabricate viseme timings.
+    """
+    from lip_sync import LipTimeline
+    if not isinstance(timeline, LipTimeline):
+        raise TypeError("Expected LipTimeline from the playback audio clip")
+    if not isinstance(playing, bool) or not isinstance(interrupted, bool):
+        raise ValueError("Playback flags must be boolean")
+    weights = timeline.sample(audio_position_ms, playing=playing,
+                              interrupted=interrupted)
+    result = {f"viseme_{i:02d}": 0.0 for i in range(22)}
+    for viseme, weight in weights.items():
+        result[f"viseme_{viseme:02d}"] = weight
+    return result
