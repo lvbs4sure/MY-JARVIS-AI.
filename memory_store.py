@@ -69,13 +69,13 @@ def search_memories(query: str, limit: int = 20):
     """Search private notes without exposing them to an external search service."""
     if not isinstance(query, str):
         raise ValueError("Search must be text.")
-    query = query.strip()
-    if not query:
-        return []
-    if len(query) > 200:
-        raise ValueError("Search must be at most 200 characters.")
     if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100:
         raise ValueError("Search limit must be between 1 and 100.")
+    query = query.strip()
+    if len(query) > 200:
+        raise ValueError("Search must be at most 200 characters.")
+    if not query:
+        return []
     # Escape LIKE wildcards so a user's % or _ is treated literally.
     escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     with connect() as db:
