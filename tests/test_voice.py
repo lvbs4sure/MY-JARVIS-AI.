@@ -8,7 +8,7 @@ class VoiceTests(unittest.TestCase):
         with patch("voice_output.st.iframe") as render:
             speak_button(text, label)
             render.assert_called_once()
-            self.assertEqual(render.call_args.kwargs["height"], 190)
+            self.assertEqual(render.call_args.kwargs["height"], 315)
             return render.call_args.args[0]
 
     def test_escapes_script_tags_in_reply(self):
@@ -54,6 +54,16 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("speechSynthesis.resume()", markup)
         self.assertIn("Speaking speed", markup)
         self.assertNotIn("fetch(", markup)
+
+    def test_speech_preview_stops_on_all_exit_paths(self):
+        markup = self.render("Hello")
+        self.assertIn("function stopPreview()", markup)
+        self.assertIn("utterance.onend = () => { stopPreview();", markup)
+        self.assertIn("utterance.onerror = (event) => { stopPreview();", markup)
+        self.assertIn("speechSynthesis.pause(); stopPreview();", markup)
+        self.assertIn("stopped = true;\\n  stopPreview();", markup)
+        self.assertIn("prefers-reduced-motion: reduce", markup)
+        self.assertIn("not exact lip-sync", markup)
 
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
