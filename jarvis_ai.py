@@ -215,6 +215,9 @@ def transcribe_audio(audio_bytes: bytes, *, muted=False, cancel_event=None):
         if cancel_event is not None and cancel_event.is_set():
             return None, "Voice request interrupted."
         text = (response.text or "").strip()
+        # The SDK may expose response.text after Stop; never return stale speech.
+        if cancel_event is not None and cancel_event.is_set():
+            return None, "Voice request interrupted."
         return (text, None) if text else (None, "No speech recognized. Please record a clearer message.")
     except Exception as exc:
         if cancel_event is not None and cancel_event.is_set():
