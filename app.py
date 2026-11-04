@@ -10,6 +10,7 @@ from memory_store import add_memory, list_memories, search_memories, update_memo
 from jarvis_ai import generate_reply, transcribe_audio
 from voice_output import speak_button
 from ui_theme import render_command_centre, render_avatar, render_side_panels
+from system_monitor import snapshot
 
 st.set_page_config(page_title="JARVIS", page_icon="🤖", layout="wide")
 render_command_centre()
@@ -70,9 +71,31 @@ with st.sidebar:
     else:
         st.error("Set JARVIS_PROVIDER to ollama or gemini in your private .env file.")
 
+# Keep these genuine Streamlit metrics accessible to users and regression tests.
+overview_provider, overview_memories, overview_messages = st.columns(3)
+with overview_provider:
+    st.metric("AI ENGINE", provider.upper())
+with overview_memories:
+    st.metric("PRIVATE MEMORIES", len(list_memories()))
+with overview_messages:
+    st.metric("SESSION MESSAGES", len(st.session_state.chat))
+
 st.markdown('<div class="jarvis-section">HOLOGRAPHIC COMMAND CENTRE</div>', unsafe_allow_html=True)
 left, centre, right = st.columns([1, 1.6, 1], gap="medium")
 with left:
+    telemetry = snapshot()
+    st.markdown("#### ◈ SYSTEM MONITOR")
+    cpu_col, ram_col = st.columns(2)
+    with cpu_col:
+        st.metric("CPU", telemetry["cpu"])
+    with ram_col:
+        st.metric("RAM", telemetry["ram"])
+    disk_col, battery_col = st.columns(2)
+    with disk_col:
+        st.metric("DISK", telemetry["disk"])
+    with battery_col:
+        st.metric("BATTERY", telemetry["battery"])
+    st.caption("Measured where available; N/A means unsupported. Refresh page for updates.")
     st.markdown('<div class="jarvis-panel"><h4>QUICK ACCESS</h4><p>◈ AI CONVERSATION</p><p>◈ PRIVATE MEMORY</p><p>◈ VOICE INTERFACE</p><p>◈ PERSONAL SETTINGS</p></div>', unsafe_allow_html=True)
     st.caption("Manage memory and settings in the left sidebar.")
 with centre:
