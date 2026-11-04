@@ -47,6 +47,7 @@ class ReliabilityTests(unittest.TestCase):
     def test_dashboard_retry_replaces_failure_and_keeps_route(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(memory_store,"DB_PATH",Path(folder)/"test.db"), patch("jarvis_ai.generate_reply_result",side_effect=[ReplyResult("Temporary failure",False,"gemini","service",True),ReplyResult("Recovered",True,"gemini")]) as reply, patch("voice_output.speak_button") as speak:
             app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/"app.py"),default_timeout=15).run()
+            app.session_state["provider_override"]="gemini"
             app.chat_input[0].set_value("Nonpersonal fixture").run()
             self.assertFalse(app.exception)
             self.assertEqual(len(app.session_state["chat"]),2)
