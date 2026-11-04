@@ -21,6 +21,10 @@ def speech_markup(text: str, label: str = "🔊 Speak reply"):
 <button id="speak" style="font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px 8px;border-radius:5px;cursor:pointer">{safe_label}</button>
 <button id="stop" style="font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px 8px;border-radius:5px;cursor:pointer">Interrupt speech</button>
 <button id="pause">Pause</button><button id="resume">Resume</button>
+<div role="img" aria-label="Speech activity preview, not phoneme accurate lip synchronization" style="width:112px;height:82px;margin:8px 0 4px;position:relative;border:1px solid #497aa0;border-radius:48%;background:radial-gradient(ellipse at center,#132b50,#050c19);box-shadow:0 0 16px #216aa766">
+<div style="position:absolute;top:28px;left:25px;width:14px;height:3px;background:#7ad9ff;box-shadow:47px 0 #7ad9ff"></div>
+<div id="mouth" style="position:absolute;left:39px;bottom:19px;width:34px;height:3px;border-radius:50%;background:#80e4ff;box-shadow:0 0 9px #62caff;transition:height 85ms ease,bottom 85ms ease"></div></div>
+<div style="font:10px system-ui;color:#87a5c5">Speech activity preview · not exact lip-sync</div>
 <br><label>Local voice <select id="voice" aria-label="Local voice"></select></label>
 <label>Speed <select id="rate" aria-label="Speaking speed"><option value="0.8">Slow</option><option value="1" selected>Normal</option><option value="1.2">Fast</option></select></label>
 <span id="status" role="status" aria-live="polite" style="margin-left:6px">Ready</span>
@@ -47,33 +51,57 @@ function refreshVoices() {{
 if ('speechSynthesis' in window) {{ refreshVoices(); speechSynthesis.addEventListener('voiceschanged', refreshVoices); }}
 let current;
 let stopped = false;
+let previewTimer = null;
+const mouth = document.getElementById('mouth');
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+let active = false;
+function setMouth(open) {{
+  mouth.style.height = (!active || reducedMotion.matches || !open) ? '3px' : '13px';
+  mouth.style.bottom = (!active || reducedMotion.matches || !open) ? '19px' : '14px';
+}}
+function stopPreview() {{
+  active = false;
+  if (previewTimer !== null) clearTimeout(previewTimer);
+  previewTimer = null;
+  setMouth(false);
+}}
+function speechPulse() {{
+  if (!active || reducedMotion.matches) return;
+  setMouth(true);
+  if (previewTimer !== null) clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => {{ previewTimer = null; setMouth(false); }}, 140);
+}}
+reducedMotion.addEventListener?.('change', () => {{ if (reducedMotion.matches) setMouth(false); }});
+
 document.getElementById('speak').onclick = () => {{
   if (!('speechSynthesis' in window)) {{ status.textContent = 'Speech is unavailable in this browser.'; return; }}
   const selectedVoice = localVoices.find(voice => voice.voiceURI === voiceMenu.value);
   if (!selectedVoice) {{ status.textContent = 'Select an installed local voice first.'; return; }}
   speechSynthesis.cancel();
+  stopPreview();
   stopped = false;
   const utterance = new SpeechSynthesisUtterance(message);
   current = utterance;
   utterance.voice = selectedVoice;
   utterance.lang = selectedVoice.lang;
   utterance.rate = Number(document.getElementById('rate').value);
-  utterance.onstart = () => {{ status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }};
-  utterance.onboundary = () => {{ window.dispatchEvent(new CustomEvent('jarvis-boundary')); }};
-  utterance.onend = () => {{ status.textContent = stopped ? 'Stopped' : 'Finished'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
-  utterance.onerror = (event) => {{ status.textContent = stopped ? 'Stopped' : 'Speech error: ' + event.error; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
+  utterance.onstart = () => {{ active = true; status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }};
+  utterance.onboundary = () => {{ speechPulse(); window.dispatchEvent(new CustomEvent('jarvis-boundary')); }};
+  utterance.onend = () => {{ stopPreview(); status.textContent = stopped ? 'Stopped' : 'Finished'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
+  utterance.onerror = (event) => {{ stopPreview(); status.textContent = stopped ? 'Stopped' : 'Speech error: ' + event.error; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
   status.textContent = 'Starting…';
   speechSynthesis.speak(utterance);
 }};
 document.getElementById('pause').onclick = () => {{
-  if ('speechSynthesis' in window && speechSynthesis.speaking) {{ speechSynthesis.pause(); status.textContent = 'Paused'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'paused'}})); }}
+  if ('speechSynthesis' in window && speechSynthesis.speaking) {{ speechSynthesis.pause(); stopPreview(); status.textContent = 'Paused'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'paused'}})); }}
 }};
 document.getElementById('resume').onclick = () => {{
-  if ('speechSynthesis' in window && speechSynthesis.paused) {{ speechSynthesis.resume(); status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }}
+  if ('speechSynthesis' in window && speechSynthesis.paused) {{ speechSynthesis.resume(); active = true; status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }}
 }};
-window.addEventListener('pagehide', () => {{ if ('speechSynthesis' in window) speechSynthesis.cancel(); }});
+window.addEventListener('pagehide', () => {{ if ('speechSynthesis' in window) speechSynthesis.cancel(); stopPreview(); }});
 document.getElementById('stop').onclick = () => {{
   stopped = true;
+  stopPreview();
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   status.textContent = 'Stopped';
   window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}}));
@@ -83,4 +111,4 @@ document.getElementById('stop').onclick = () => {{
 
 
 def speak_button(text: str, label: str = "🔊 Speak reply"):
-    st.iframe(speech_markup(text,label), height=190, alt="Speak or stop this assistant reply")
+    st.iframe(speech_markup(text,label), height=315, alt="Speak or stop this assistant reply")
