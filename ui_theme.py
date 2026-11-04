@@ -45,7 +45,13 @@ h1,h2,h3,h4{color:#d9e7ff!important}
 .hud-terminal{font:11px/1.9 ui-monospace,Consolas,monospace;color:#a29bcb;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
 .hud-terminal strong{color:#7edeea;font-weight:500}.hud-rule{border:0;border-top:1px solid #66729b30;margin:10px 0}
 .hud-log{font:10px/1.9 Consolas,monospace;color:#91a0ba;margin:0}.hud-log time{color:#6f9ec0}.hud-log em{color:#79cdbb;font-style:normal}
-.holo-stage{height:620px;position:relative;pointer-events:none;isolation:isolate}
+.holo-stage{height:620px;position:relative;pointer-events:none;isolation:isolate;overflow:hidden}
+.holo-presence{position:absolute;inset:4% 0 8%;transform-origin:50% 62%;animation:jarvis-presence 7s ease-in-out infinite;filter:drop-shadow(0 0 12px #62cfff33)}
+.holo-presence:before{content:'';position:absolute;inset:7% 16%;border-radius:50%;background:radial-gradient(ellipse at 50% 38%,#8ddfff13,transparent 62%);animation:jarvis-focus 9s ease-in-out infinite}
+.holo-presence:after{content:'';position:absolute;left:48%;top:25%;width:4%;height:12%;border-radius:50%;background:#9cecff16;filter:blur(16px);animation:jarvis-focus 5s ease-in-out infinite alternate}
+.state-thinking .holo-presence{animation-duration:2.8s}
+@keyframes jarvis-presence{0%,100%{transform:translateY(0) scale(1) rotate(-.35deg)}35%{transform:translateY(-7px) scale(1.012) rotate(.35deg)}65%{transform:translateY(2px) scale(.997) rotate(-.15deg)}}
+@keyframes jarvis-focus{0%,100%{opacity:.32;transform:translateX(-2%)}50%{opacity:.8;transform:translateX(2%)}}
 .holo-state{position:absolute;bottom:5%;left:0;right:0;text-align:center;font:9px Consolas,monospace;letter-spacing:.18em;color:#b8e8ff;text-shadow:0 0 10px #50cfff}
 .holo-scan{position:absolute;top:6%;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,#9aebff8c,transparent);box-shadow:0 0 10px #75dcff80;animation:holo-scan 12s linear infinite;opacity:.3}
 .holo-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,#54aaff0a,transparent 65%);animation:holo-breathe 5s ease-in-out infinite}
@@ -76,7 +82,7 @@ def render_avatar(state="ready", reduced_motion=False):
     states={"ready":"JARVIS / READY", "thinking":"JARVIS / PROCESSING YOUR REQUEST", "transcribing":"JARVIS / TRANSCRIBING RECORDING", "error":"JARVIS / REQUEST NEEDS ATTENTION"}
     state=state if state in states else "ready"
     classes=f"holo-stage state-{state}"+(" motion-off" if reduced_motion else "")
-    st.markdown(f'<div class="{classes}" role="img" aria-label="Photorealistic holographic JARVIS character"><div class="holo-glow"></div><div class="holo-scan"></div><div class="holo-state">{states[state]}</div></div>',unsafe_allow_html=True)
+    st.markdown(f'<div class="{classes}" role="img" aria-label="Photorealistic holographic JARVIS character"><div class="holo-presence" aria-hidden="true"></div><div class="holo-glow"></div><div class="holo-scan"></div><div class="holo-state">{states[state]}</div></div>',unsafe_allow_html=True)
 
 
 def render_side_panels(provider,memory_count,message_count,activity=()):
