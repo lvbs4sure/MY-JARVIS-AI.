@@ -150,6 +150,25 @@ class MemoryTests(unittest.TestCase):
                 self.assertEqual(memory_store.search_memories("' OR 1=1 --"), [])
                 self.assertEqual(memory_store.count_memories(), 3)
 
+    @unittest.skipUnless(os.name == "posix", "POSIX file permissions only")
+    def test_new_private_database_is_owner_only(self):
+        with tempfile.TemporaryDirectory() as folder:
+            database = Path(folder) / "private.db"
+            with patch.object(memory_store, "DB_PATH", database):
+                memory_store.add_memory("private note")
+                self.assertEqual(database.stat().st_mode & 0o777, 0o600)
+                self.assertEqual(memory_store.list_memories()[0][1], "private note")
+
+    @unittest.skipUnless(os.name == "posix", "POSIX file permissions only")
+    def test_existing_database_permissions_are_not_changed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            database = Path(folder) / "existing.db"
+            database.touch(mode=0o640)
+            database.chmod(0o640)
+            with patch.object(memory_store, "DB_PATH", database):
+                memory_store.add_memory("existing note")
+            self.assertEqual(database.stat().st_mode & 0o777, 0o640)
+
     def test_reject_blank_memory(self):
         with self.assertRaises(ValueError):
             memory_store.add_memory("   ")
