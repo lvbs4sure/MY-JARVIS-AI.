@@ -72,6 +72,41 @@ class AITests(unittest.TestCase):
         self.assertEqual(result.kind, "cancelled")
         self.assertNotIn("Stale private answer", result.text)
 
+    def test_cancelled_gemini_fallback_discards_local_answer(self):
+        from threading import Event
+        from jarvis_ai import generate_reply_result
+
+        stopped = Event()
+
+        def local_finishes_after_stop(*args, **kwargs):
+            stopped.set()
+            return "stale fallback answer", None
+
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key", "JARVIS_OLLAMA_FALLBACK": "on"}):
+            with patch("jarvis_ai._gemini_content", return_value=(None, ("temporary outage", "service", True, 503))):
+                with patch("jarvis_ai.ollama_reply", side_effect=local_finishes_after_stop):
+                    result = generate_reply_result([], [], provider="gemini", cancel_event=stopped)
+        self.assertFalse(result.ok)
+        self.assertEqual(result.kind, "cancelled")
+        self.assertNotIn("stale fallback answer", result.text)
+
+    def test_cancelled_voice_response_is_not_transcribed(self):
+        from threading import Event
+
+        stopped = Event()
+
+        def transcription_finishes_after_stop(*args, **kwargs):
+            stopped.set()
+            response = MagicMock()
+            response.text = "stale private transcription"
+            return response, None
+
+        with patch.dict(os.environ, {"JARVIS_VOICE_PROVIDER": "gemini", "GEMINI_API_KEY": "test-key"}):
+            with patch("jarvis_ai._gemini_content", side_effect=transcription_finishes_after_stop):
+                result, message = transcribe_audio(b"sample", cancel_event=stopped)
+        self.assertIsNone(result)
+        self.assertIn("interrupted", message)
+
     def test_unknown_provider_rejected_without_network(self):
         with patch.dict(os.environ, {"JARVIS_PROVIDER": "unexpected"}):
             with patch("jarvis_ai._local_urlopen") as network:
