@@ -5,6 +5,29 @@ The owner wants that same character to blink, speak with synchronized lips,
 gesture and eventually walk. Do not substitute a wireframe face or claim a
 static image is a rigged animated person.
 
+## Owner-confirmed identity lock (2026-11-04)
+
+The owner explicitly confirmed: **keep the exact same face and blue/violet
+holographic appearance**, even if an animation-ready version must be developed
+in stages. This is a design requirement, not approval to upload the artwork to
+a third-party service or permission to replace the live character immediately.
+
+- Source of visual identity: the existing approved `static/jarvis-scene.png`.
+  Preserve that asset and the current live dashboard as the fallback.
+- Any generated or rigged preview must match the face, hair, proportions,
+  recognizable features, holographic color palette and lighting direction of
+  the approved reference. Do not substitute a generic robot or wireframe.
+- First validate a side-by-side neutral-pose identity comparison. Then add
+  eyelid/blink and gaze controls, followed by facial expressions and
+  audio-clock-driven speech shapes. Walking and body gestures come later.
+- Only an actual eyelid/face rig or verified frame animation counts as facial
+  movement. Moving CSS overlays, image translation, and a separate speech
+  preview are **not** evidence that the character itself is animated.
+- Keep preview assets isolated and opt-in. Before replacing the default,
+  require owner review, real playback tests, reduced-motion behavior, and
+  laptop RAM/GPU measurements. No cloud processing or new software
+  installation is authorized by this identity confirmation alone.
+
 ## Required assets and capabilities
 
 1. Identity-preserving full-body reference and facial expressions, reviewed by
