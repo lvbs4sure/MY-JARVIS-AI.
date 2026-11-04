@@ -137,6 +137,40 @@ class AITests(unittest.TestCase):
         self.assertIsNone(result)
         self.assertEqual(message, "Voice request interrupted.")
 
+    def test_cancelled_gemini_reply_during_text_extraction_is_discarded(self):
+        from threading import Event
+        from jarvis_ai import generate_reply_result
+
+        stopped = Event()
+
+        class LateText:
+            @property
+            def text(self):
+                stopped.set()
+                return "stale private Gemini answer"
+
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}):
+            with patch("jarvis_ai._gemini_content", return_value=(LateText(), None)):
+                result = generate_reply_result([], [], provider="gemini", cancel_event=stopped)
+        self.assertFalse(result.ok)
+        self.assertEqual(result.kind, "cancelled")
+        self.assertNotIn("stale private Gemini answer", result.text)
+
+    def test_cancelled_gemini_client_setup_error_reports_interruption(self):
+        from threading import Event
+        from jarvis_ai import _gemini_content
+
+        stopped = Event()
+
+        def client_fails(*args, **kwargs):
+            stopped.set()
+            raise RuntimeError("late client setup failure")
+
+        with patch("google.genai.Client", side_effect=client_fails):
+            response, failure = _gemini_content("test-key", "hello", "test-model", cancel_event=stopped)
+        self.assertIsNone(response)
+        self.assertEqual(failure[1], "cancelled")
+
     def test_unknown_provider_rejected_without_network(self):
         with patch.dict(os.environ, {"JARVIS_PROVIDER": "unexpected"}):
             with patch("jarvis_ai._local_urlopen") as network:
