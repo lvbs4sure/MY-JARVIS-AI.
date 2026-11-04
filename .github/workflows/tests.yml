@@ -13,6 +13,6 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Compile Python
-        run: python -m compileall -q app.py jarvis_ai.py memory_store.py tests
+        run: python -m compileall -q app.py jarvis_ai.py memory_store.py voice_output.py tests
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
