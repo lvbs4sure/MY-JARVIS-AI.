@@ -18,6 +18,7 @@ from request_jobs import RequestJob
 from conversation_flow import finish_request
 from ui_theme import render_command_centre, render_avatar, window_title, render_session_strip
 from dashboard_panels import render_system_monitor
+from dashboard_readiness import dashboard_readiness
 from activity_log import record_activity
 from local_ai import inspect_local_ai, hardware_readiness
 from local_runtime import start as start_isolated_ai, benchmark as benchmark_isolated_ai
@@ -231,6 +232,17 @@ with right:
                             st.warning(str(exc))
         with system_tile:
             with st.popover("System",icon=":material/monitor_heart:",width="stretch"):
+                st.markdown("### Dashboard readiness")
+                try:
+                    import psutil
+                    free_ram = psutil.virtual_memory().available
+                except (ImportError, OSError, AttributeError):
+                    free_ram = None
+                for feature, (status, detail) in dashboard_readiness(
+                    provider, free_ram_bytes=free_ram
+                ).items():
+                    st.caption(f"{feature.upper()} · {status.upper()} — {detail}")
+                st.divider()
                 st.markdown("### Live system readings")
                 st.toggle("Live monitoring",value=True,key="live_monitoring")
                 st.caption("CPU, RAM, storage, battery and adapter counters are read locally every two seconds. Network link is not an internet availability test. Temperature is N/A when Windows exposes no sensor.")
