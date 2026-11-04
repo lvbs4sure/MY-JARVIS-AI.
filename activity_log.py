@@ -1,9 +1,9 @@
 """Bounded, in-session action history; never stores prompts, notes or secrets."""
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 
 def record_activity(state, action, outcome="done"):
-    entry = {"time": datetime.now(timezone(timedelta(hours=1))).strftime("%H:%M:%S"), "action": action, "outcome": outcome}
+    entry = {"time": datetime.now().astimezone().strftime("%H:%M:%S"), "action": action, "outcome": outcome}
     state["activity"] = (state.get("activity", []) + [entry])[-30:]
 
 
