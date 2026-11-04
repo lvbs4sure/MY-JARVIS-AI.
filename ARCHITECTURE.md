@@ -90,3 +90,40 @@ the usable foundation; they do not implement the advanced command-centre roadmap
 See `tests/WINDOWS_VALIDATION_2026-11-04.md` for observed browser and automated
 results, including pending microphone/audibility checks and intermittent network
 failures. No old installation or private memory database was migrated.
+
+
+## Approved comprehensive design baseline — holographic command centre (2026-11-04)
+
+**Owner direction:** Build the complete JARVIS vision into the architecture first; use the shared LISA holographic desktop image as a **visual benchmark**, not copied artwork, branding or fake telemetry. Implement progressively and review refinements afterward. This document is the source of truth for the target design; items labeled *planned* are not working features.
+
+### Target experience and visual composition
+- **Central identity:** original JARVIS humanlike holographic character (not LISA), blue/cyan/violet light, responsive facial expressions, eye focus, mouth movement, and listening/thinking/speaking/idle/error states. A lightweight animated fallback must run on the owner's current integrated-GPU laptop; heavier 3D is optional and must degrade gracefully.
+- **Left workspace:** live CPU/RAM/disk/network/battery metrics with clear units and unavailable states; searchable terminal/diagnostics with approved commands only; time-stamped activity logs.
+- **Centre workspace:** holographic avatar, reactive audio visualizer, live clock, optional weather with source and freshness, assistant state, wake/mute controls, and accessibility alternatives.
+- **Right workspace:** AI conversation with voice and text, code snippets, verified research citations, action cards with explicit approvals, shortcut tiles, project and document status.
+- **Navigation:** Home, Chat, Research, Documents, Projects, Automations, Memory, System, Settings, and Owner Console (Owner Console visible only in future authenticated hosted deployment). Customizable layout, keyboard navigation, reduced-motion mode, responsive small-screen layout, readable contrast, and honest system status.
+- **Visual direction:** cinematic cyberpunk night scene, luminous glass panels, crisp typography, fine cyan outlines, violet highlights, restrained animation. Do not present decorative figures as live measurements.
+
+### Functional components and contracts
+1. **Desktop shell:** a responsive multi-panel interface. Initial implementation can remain Streamlit; investigate a desktop shell/web front end when interactive 3D and continuous speech require it. Preserve existing chat and memory APIs.
+2. **Telemetry:** collect Windows metrics via optional psutil and OS APIs, with bounded sampling, safe subprocess policy, no elevated privileges, and clear N/A when unavailable. No invented temperatures, throughput or CPU numbers.
+3. **Voice pipeline:** microphone capture -> per-recording consent if cloud transcription -> speech recognition -> conversation -> text response -> optional speech playback. Later add local speech recognition, wake word, voice activity detection, barge-in, auto playback after explicit enablement, device selection and voice personalities. Clearly show mute and cloud-upload states.
+4. **Brain/router:** Ollama local-first, optional Gemini cloud with transparent data routing, timeouts, fallback, model-health checks, prompt-injection boundaries and explicit costs/limits.
+5. **Memory/knowledge:** local durable user-owned memory, topics, preferences, provenance, edit/delete/export, opt-in ingestion, retrieval, retention and backup. Research facts require user approval before long-term saving.
+6. **Research:** multi-source browsing, freshness, citations, claim verification and disagreement tracking, with verified/inferred/unknown labels.
+7. **Document and project centre:** user-selected files and folders only, previews, text extraction, summarization, drafting, project workspaces and versioned outputs. No indiscriminate scan or upload of Documents. Sensitive content remains local unless explicitly authorized.
+8. **Computer actions:** scoped permissions for reading, writing, opening apps, browsing, code execution and automation; preview planned actions; require confirmation for deletion, external transmission, software installation and irreversible changes; audit outcomes and allow cancellation.
+9. **Planning and recovery:** task graph, checkpoints, progress logs, retries, cancellation, verified outcomes and error recovery; no false completion reports.
+10. **Distribution:** separate independent friend copies and a future invitation-only, owner-approved hosted system with Root Owner/Admin/Moderator/Standard roles, per-tenant isolation, authentication, encryption, audit logs, backups, revocation and recovery. AWS hosting is not authorized or provisioned.
+11. **Operations/security:** least privilege, loopback binding for prototype, encrypted secrets, dependency scanning, signed releases when available, data backup/restore tests, resource budgets and user-visible diagnostics.
+
+### Build sequence and acceptance gates
+- **A — immediately:** visually faithful original multi-panel dashboard, animated lightweight avatar, responsive dark UI, genuine provider/memory/chat status; preserve current app functionality.
+- **B:** real Windows telemetry and event log, with permissions and N/A fallback; verified local hardware readings.
+- **C:** stable end-to-end microphone-to-reply and accessible audio controls; physical speaker validation; optional local speech.
+- **D:** research, files/projects and memory management with user-approved data flow.
+- **E:** safe permissioned computer operations, planner, checkpoints, and action audit trail.
+- **F:** richer 3D avatar, advanced continuous voice, desktop packaging, performance profiling.
+- **G:** separately designed hosted owner-controlled platform after security review and explicit provisioning approval.
+
+**Acceptance:** tests + Windows runtime checks + human-visible verification. Passing CI alone is not proof of hardware, speaker, telemetry or hosted readiness. Do not claim a feature is complete until it is verified in its target environment. Never modify the user's old installations, private documents, memory database, or .env without the relevant scope and backup.
