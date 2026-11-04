@@ -44,6 +44,23 @@ class MemoryTests(unittest.TestCase):
             finally:
                 memory_store.DB_PATH = original
 
+    def test_search_memories_matches_text_and_literal_wildcards(self):
+        with tempfile.TemporaryDirectory() as folder:
+            original = memory_store.DB_PATH
+            try:
+                memory_store.DB_PATH = Path(folder) / "search.db"
+                memory_store.add_memory("Project alpha")
+                memory_store.add_memory("Budget 50%")
+                memory_store.add_memory("File a_b")
+                self.assertEqual([r[1] for r in memory_store.search_memories("alpha")], ["Project alpha"])
+                self.assertEqual([r[1] for r in memory_store.search_memories("%")], ["Budget 50%"])
+                self.assertEqual([r[1] for r in memory_store.search_memories("_")], ["File a_b"])
+                self.assertEqual(memory_store.search_memories("   "), [])
+                with self.assertRaises(ValueError):
+                    memory_store.search_memories("x" * 201)
+            finally:
+                memory_store.DB_PATH = original
+
     def test_reject_blank_memory(self):
         with self.assertRaises(ValueError):
             memory_store.add_memory("   ")
