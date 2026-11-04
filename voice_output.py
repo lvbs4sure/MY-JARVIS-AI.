@@ -87,17 +87,19 @@ document.getElementById('speak').onclick = () => {{
   utterance.lang = selectedVoice.lang;
   utterance.rate = Number(document.getElementById('rate').value);
   utterance.onstart = () => {{ if (current !== utterance || stopped) return; active = true; status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }};
-  utterance.onboundary = () => {{ if (current !== utterance || stopped) return; speechPulse(); window.dispatchEvent(new CustomEvent('jarvis-boundary')); }};
+  utterance.onboundary = () => {{ if (current !== utterance || stopped || speechSynthesis.paused) return; speechPulse(); window.dispatchEvent(new CustomEvent('jarvis-boundary')); }};
+  utterance.onpause = () => {{ if (current !== utterance || stopped) return; stopPreview(); status.textContent = 'Paused'; }};
+  utterance.onresume = () => {{ if (current !== utterance || stopped) return; active = true; status.textContent = 'Speaking'; }};
   utterance.onend = () => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Finished'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
   utterance.onerror = (event) => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Speech error: ' + event.error; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
   status.textContent = 'Starting…';
   speechSynthesis.speak(utterance);
 }};
 document.getElementById('pause').onclick = () => {{
-  if ('speechSynthesis' in window && speechSynthesis.speaking) {{ speechSynthesis.pause(); stopPreview(); status.textContent = 'Paused'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'paused'}})); }}
+  if ('speechSynthesis' in window && current && speechSynthesis.speaking && !speechSynthesis.paused) {{ speechSynthesis.pause(); stopPreview(); status.textContent = 'Paused'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'paused'}})); }}
 }};
 document.getElementById('resume').onclick = () => {{
-  if ('speechSynthesis' in window && speechSynthesis.paused) {{ speechSynthesis.resume(); active = true; status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }}
+  if ('speechSynthesis' in window && current && !stopped && speechSynthesis.paused) {{ speechSynthesis.resume(); active = true; status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }}
 }};
 window.addEventListener('pagehide', () => {{ current = null; stopped = true; if ('speechSynthesis' in window) speechSynthesis.cancel(); stopPreview(); }});
 document.getElementById('stop').onclick = () => {{
