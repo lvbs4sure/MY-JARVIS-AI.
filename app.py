@@ -9,7 +9,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 from memory_store import add_memory, list_memories, search_memories, update_memory, delete_memory
 from jarvis_ai import generate_reply, transcribe_audio
 from voice_output import speak_button
-from ui_theme import render_command_centre
+from ui_theme import render_command_centre, render_avatar, render_side_panels
 
 st.set_page_config(page_title="JARVIS", page_icon="🤖", layout="wide")
 render_command_centre()
@@ -70,15 +70,16 @@ with st.sidebar:
     else:
         st.error("Set JARVIS_PROVIDER to ollama or gemini in your private .env file.")
 
-st.markdown('<div class="jarvis-section">SYSTEM OVERVIEW</div>', unsafe_allow_html=True)
-status_a, status_b, status_c = st.columns(3)
-with status_a:
-    st.metric("AI ENGINE", provider.upper())
-with status_b:
-    st.metric("PRIVATE MEMORIES", len(list_memories()))
-with status_c:
-    st.metric("SESSION MESSAGES", len(st.session_state.chat))
-st.markdown('<div class="jarvis-section">CONVERSATION CONSOLE</div>', unsafe_allow_html=True)
+st.markdown('<div class="jarvis-section">HOLOGRAPHIC COMMAND CENTRE</div>', unsafe_allow_html=True)
+left, centre, right = st.columns([1, 1.6, 1], gap="medium")
+with left:
+    st.markdown('<div class="jarvis-panel"><h4>QUICK ACCESS</h4><p>◈ AI CONVERSATION</p><p>◈ PRIVATE MEMORY</p><p>◈ VOICE INTERFACE</p><p>◈ PERSONAL SETTINGS</p></div>', unsafe_allow_html=True)
+    st.caption("Manage memory and settings in the left sidebar.")
+with centre:
+    render_avatar()
+with right:
+    render_side_panels(provider, len(list_memories()), len(st.session_state.chat))
+st.markdown('<div class="jarvis-section">AI CHAT INTERFACE</div>', unsafe_allow_html=True)
 for message in st.session_state.chat:
     with st.chat_message(message["role"]):
         st.write(message["content"])
