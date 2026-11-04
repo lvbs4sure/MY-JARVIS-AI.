@@ -43,5 +43,19 @@ class AppTests(unittest.TestCase):
                 speak.assert_called_once_with("Hello from JARVIS")
 
 
+    def test_voice_message_sends_directly_after_consent(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"), \
+                 patch("jarvis_ai.transcribe_audio", return_value=("Can you hear me?", None)) as transcribe, \
+                 patch("jarvis_ai.generate_reply", return_value="Yes, I can hear you."), \
+                 patch("voice_output.speak_button"):
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py")).run()
+                # The microphone widget requires a browser to supply audio bytes.
+                # Verify the UI no longer requires a second transcript-review form.
+                self.assertFalse(app.exception)
+                self.assertNotIn("voice_review", str(app.session_state))
+                transcribe.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()
