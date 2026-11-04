@@ -19,6 +19,9 @@ def connect():
             pass
         else:
             os.close(fd)
+    # Reject symbolic links to avoid silently using another installation's database.
+    if DB_PATH.is_symlink():
+        raise ValueError("Memory database path must not be a symbolic link.")
     db = sqlite3.connect(DB_PATH)
     try:
         with db:
