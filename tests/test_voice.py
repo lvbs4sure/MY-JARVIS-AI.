@@ -61,9 +61,16 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("utterance.onend = () => { stopPreview();", markup)
         self.assertIn("utterance.onerror = (event) => { stopPreview();", markup)
         self.assertIn("speechSynthesis.pause(); stopPreview();", markup)
-        self.assertIn("stopped = true;\n  stopPreview();", markup)
+        self.assertIn("stopped = true;\n  current = null;\n  stopPreview();", markup)
         self.assertIn("prefers-reduced-motion: reduce", markup)
         self.assertIn("not exact lip-sync", markup)
+
+    def test_stale_speech_callbacks_are_ignored(self):
+        markup = self.render("Hello")
+        self.assertIn("if (current !== utterance || stopped) return;", markup)
+        self.assertIn("if (current !== utterance) return; current = null;", markup)
+        self.assertIn("current = null;\\n  speechSynthesis.cancel();", markup)
+        self.assertIn("current = null; stopped = true;", markup)
 
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
