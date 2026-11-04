@@ -58,8 +58,8 @@ class VoiceTests(unittest.TestCase):
     def test_speech_preview_stops_on_all_exit_paths(self):
         markup = self.render("Hello")
         self.assertIn("function stopPreview()", markup)
-        self.assertIn("utterance.onend = () => { stopPreview();", markup)
-        self.assertIn("utterance.onerror = (event) => { stopPreview();", markup)
+        self.assertIn("utterance.onend = () => { if (current !== utterance) return; current = null; stopPreview();", markup)
+        self.assertIn("utterance.onerror = (event) => { if (current !== utterance) return; current = null; stopPreview();", markup)
         self.assertIn("speechSynthesis.pause(); stopPreview();", markup)
         self.assertIn("stopped = true;\n  current = null;\n  stopPreview();", markup)
         self.assertIn("prefers-reduced-motion: reduce", markup)
@@ -69,7 +69,7 @@ class VoiceTests(unittest.TestCase):
         markup = self.render("Hello")
         self.assertIn("if (current !== utterance || stopped) return;", markup)
         self.assertIn("if (current !== utterance) return; current = null;", markup)
-        self.assertIn("current = null;\\n  speechSynthesis.cancel();", markup)
+        self.assertIn("current = null;\n  speechSynthesis.cancel();", markup)
         self.assertIn("current = null; stopped = true;", markup)
 
     def test_markdown_is_natural_speech(self):
