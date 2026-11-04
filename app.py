@@ -10,6 +10,9 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 from memory_store import add_memory, list_memories, search_memories, count_memories, update_memory, delete_memory
 from jarvis_ai import generate_reply_result, transcribe_audio
 from voice_output import speak_button
+from file_preview import preview_upload
+from request_jobs import RequestJob
+from conversation_flow import finish_request
 from ui_theme import render_command_centre, render_avatar, window_title
 from dashboard_panels import render_system_monitor
 from activity_log import record_activity
@@ -18,6 +21,12 @@ from local_runtime import start as start_isolated_ai, benchmark as benchmark_iso
 
 
 def reset_voice_capture():
+    if st.session_state.get("microphone_muted"):
+        st.session_state.pop("pending_spoken",None)
+        st.session_state.pop("spoken_route",None)
+        job = st.session_state.get("request_job")
+        if job is not None and job.kind == "voice":
+            job.cancel()
     st.session_state.voice_epoch = st.session_state.get("voice_epoch", 0) + 1
 
 
@@ -54,11 +63,35 @@ def render_memory_controls():
                     record_activity(st.session_state, "Memory deleted")
                     st.rerun()
 
+@st.fragment(run_every="500ms")
+def request_controls():
+    job = st.session_state.get("request_job")
+    if job is None:
+        return
+    if finish_request(st.session_state):
+        st.rerun()
+    if job.cancel_event.is_set():
+        st.caption("Interrupted. Discarding the result and waiting for the current connection to finish.")
+    else:
+        st.caption("Transcribing with Gemini…" if job.kind == "voice" else f"Waiting for {job.metadata['provider'].upper()}…")
+    if st.button("Interrupt request", key="interrupt_request", disabled=job.cancel_event.is_set(), icon=":material/stop_circle:"):
+        job.cancel()
+        st.session_state.assistant_state = "ready"
+        st.rerun()
+    st.caption("Interrupt stops retries and discards late results. It cannot recall data already sent. New requests wait until this one finishes.")
+
+
 st.set_page_config(page_title="JARVIS", page_icon="◈", layout="wide", initial_sidebar_state="collapsed")
 render_command_centre()
 st.session_state.setdefault("chat", [])
 st.session_state.setdefault("voice_digest", None)
 st.session_state.setdefault("assistant_state", "ready")
+finish_request(st.session_state)
+spoken=st.session_state.pop("pending_spoken", None)
+if st.session_state.get("microphone_muted"):
+    spoken=None
+    st.session_state.pop("spoken_route",None)
+busy=st.session_state.get("request_job") is not None
 if "activity" not in st.session_state:
     record_activity(st.session_state, "Dashboard opened")
 assistant_name=st.session_state.get("assistant_name", os.getenv("JARVIS_NAME", "JARVIS"))
@@ -90,15 +123,19 @@ with right:
             for message in st.session_state.chat:
                 with st.chat_message(message["role"]):
                     st.write(message["content"])
+                    if message.get("cancelled"):
+                        st.caption("Interrupted; omitted from future AI context.")
                     if message["role"]=="assistant" and message.get("ok", True):
                         speak_button(message["content"])
         if st.session_state.get("last_request"):
             st.caption(st.session_state.last_request)
+        if busy:
+            request_controls()
         retry = False
         if st.session_state.chat and st.session_state.chat[-1].get("retryable"):
             st.caption("The last request failed. Retry sends the same conversation to the same provider.")
-            retry = st.button("Retry last message", key="retry_reply")
-        typed=st.chat_input(f"Ask {assistant_name} anything…",key="chat_prompt")
+            retry = st.button("Retry last message", key="retry_reply", disabled=busy)
+        typed=st.chat_input(f"Ask {assistant_name} anything…",key="chat_prompt", disabled=busy)
     with st.container(key="code_window"):
         window_title("Code snippet")
         last_reply=next((item["content"] for item in reversed(st.session_state.chat) if item["role"]=="assistant"), "")
@@ -125,11 +162,12 @@ with right:
                     st.info("Microphone muted. New recording and transcription are blocked.")
                     audio=None
                 else:
-                    audio=st.audio_input("Record your message", key=f"voice_capture_{st.session_state.get('voice_epoch', 0)}")
+                    audio=st.audio_input("Record your message", key=f"voice_capture_{st.session_state.get('voice_epoch', 0)}", disabled=busy)
                 with st.expander("Test local spoken replies"):
                     st.caption("Uses an installed local browser voice. Nothing is sent to a speech service.")
                     speak_button("JARVIS voice controls are ready.")
-                spoken=None
+                if st.session_state.get("voice_error"):
+                    st.warning(st.session_state.voice_error)
                 if audio is not None:
                     raw=audio.getvalue()
                     digest=hashlib.sha256(raw).hexdigest()
@@ -137,22 +175,17 @@ with right:
                     already_sent=digest==st.session_state.voice_digest
                     if already_sent:
                         st.caption("Recording already sent. Record a new message to continue.")
-                    if st.button("Send voice message to JARVIS",key="transcribe",disabled=not consent or already_sent):
-                        with st.spinner("Processing voice message…"):
-                            spoken,error=transcribe_audio(raw)
-                        if error:
-                            st.warning(error)
-                            st.session_state.assistant_state="error"
-                            with avatar_mount.container():
-                                render_avatar("error",reduced_motion)
-                            record_activity(st.session_state,"Voice transcription","failed")
-                        elif spoken and spoken.strip():
-                            spoken=spoken.strip()
+                    if st.button("Send voice message to JARVIS",key="transcribe",disabled=not consent or already_sent or busy):
+                        try:
+                            st.session_state.request_job=RequestJob("voice", lambda token: transcribe_audio(raw, cancel_event=token),
+                                {"provider":provider,"local_model":st.session_state.get("local_model_override")})
                             st.session_state.voice_digest=digest
-                            record_activity(st.session_state,"Voice transcribed")
-                        else:
-                            spoken=None
-                            st.warning("No speech recognized. Please record again.")
+                            st.session_state.pop("voice_error",None)
+                            st.session_state.assistant_state="transcribing"
+                            st.session_state.request_job.finished.wait(0.02)
+                            st.rerun()
+                        except RuntimeError as exc:
+                            st.warning(str(exc))
         with system_tile:
             with st.popover("System",icon=":material/monitor_heart:",width="stretch"):
                 st.markdown("### Live system readings")
@@ -232,41 +265,47 @@ with right:
     with st.expander("Research and selected-file preview"):
         with st.container(key="research_window"):
             window_title("Research workspace")
-            st.caption("KAVI-inspired research panel · verified results only")
+            st.caption("RESEARCH / DISCONNECTED")
+            st.markdown("Research results will appear here with sources and timestamps when a research provider is connected.")
             st.info("Live web research is not connected yet. JARVIS will not invent search results or sources.")
         with st.container(key="file_window"):
             window_title("Selected file preview")
-            selected_file = st.file_uploader("Choose a file to inspect", type=["txt", "md", "csv"], key="kavi_file_preview")
+            selected_file = st.file_uploader("Choose a file to inspect", type=["txt", "md", "csv"], key="kavi_file_preview", max_upload_size=1)
             if selected_file is not None:
-                if selected_file.size > 1_000_000:
-                    st.warning("File exceeds the 1 MB preview limit. Nothing was saved.")
-                else:
-                    preview_bytes = selected_file.getvalue()
-                    preview_text = preview_bytes.decode("utf-8", errors="replace")
-                    st.caption(f"{selected_file.name} · {selected_file.size} bytes · preview only, not sent to AI or saved")
-                    st.text_area("File contents (read-only preview)", value=preview_text[:4000], height=130, disabled=True)
+                try:
+                    filename, preview_text, byte_count, truncated = preview_upload(selected_file)
+                    st.text(f"{filename} · {byte_count:,} bytes")
+                    st.caption("Local preview only. Never executed, saved to disk, or sent to AI.")
+                    st.text_area("File contents (read-only preview)", value=preview_text, height=160, disabled=True)
+                    if truncated:
+                        st.caption("Showing the first 4,000 characters.")
+                except ValueError as exc:
+                    st.warning(str(exc))
 prompt=typed or spoken
-if prompt or retry:
+if (prompt or retry) and not busy:
     if retry:
         failed_message = st.session_state.chat.pop()
         request_provider = failed_message["request_provider"]
         request_model = failed_message.get("request_model")
     else:
         st.session_state.chat.append({"role":"user","content":prompt})
-        request_provider = provider
-        request_model = st.session_state.get("local_model_override")
-        with conversation:
-            with st.chat_message("user"):
-                st.write(prompt)
-    with avatar_mount.container():
-        render_avatar("thinking",reduced_motion)
-    history = [{"role": m["role"], "content": m["content"]} for m in st.session_state.chat if m.get("ok", True)]
-    with right:
-        with st.spinner(f"{assistant_name} is thinking…"):
-            outcome=generate_reply_result(history,list_memories(),assistant_name,personality,provider=request_provider,local_model=request_model)
-    st.session_state.chat.append({"role":"assistant","content":outcome.text,"ok":outcome.ok,"retryable":outcome.retryable,
-        "request_provider":request_provider,"request_model":request_model})
-    st.session_state.last_request = f"{outcome.provider.upper()} · {outcome.latency_ms} ms · {outcome.kind}"
-    st.session_state.assistant_state="ready" if outcome.ok else "error"
-    record_activity(st.session_state,"AI reply","received" if outcome.ok else "failed")
-    st.rerun()
+        route=st.session_state.pop("spoken_route",{}) if spoken else {}
+        request_provider = route.get("provider",provider)
+        request_model = route.get("local_model",st.session_state.get("local_model_override"))
+    history = [{"role": m["role"], "content": m["content"]} for m in st.session_state.chat if m.get("ok", True) and not m.get("cancelled")]
+    memories=list_memories()
+    try:
+        st.session_state.request_job=RequestJob("chat",
+            lambda token: generate_reply_result(history,memories,assistant_name,personality,provider=request_provider,local_model=request_model,cancel_event=token),
+            {"provider":request_provider,"local_model":request_model,"user_index":len(st.session_state.chat)-1})
+        st.session_state.assistant_state="thinking"
+        st.session_state.request_job.finished.wait(0.02)
+        st.rerun()
+    except RuntimeError as exc:
+        if retry:
+            st.session_state.chat.append(failed_message)
+        else:
+            st.session_state.chat[-1]["cancelled"]=True
+        st.session_state.assistant_state="error"
+        record_activity(st.session_state,"Request not started","failed")
+        st.warning(str(exc))

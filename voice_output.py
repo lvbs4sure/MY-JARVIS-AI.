@@ -19,7 +19,7 @@ def speak_button(text: str, label: str = "🔊 Speak reply"):
     safe_label = html.escape(str(label)[:80], quote=True)
     markup = f"""<!doctype html><html><head><style>button,select {{font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px;border-radius:5px;margin:2px}} label {{display:block}} select {{max-width:calc(100% - 70px)}} </style></head><body style="margin:0;background:transparent;color:#a9bddb;font:11px system-ui">
 <button id="speak" style="font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px 8px;border-radius:5px;cursor:pointer">{safe_label}</button>
-<button id="stop" style="font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px 8px;border-radius:5px;cursor:pointer">Stop</button>
+<button id="stop" style="font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px 8px;border-radius:5px;cursor:pointer">Interrupt speech</button>
 <button id="pause">Pause</button><button id="resume">Resume</button>
 <br><label>Local voice <select id="voice" aria-label="Local voice"></select></label>
 <label>Speed <select id="rate" aria-label="Speaking speed"><option value="0.8">Slow</option><option value="1" selected>Normal</option><option value="1.2">Fast</option></select></label>

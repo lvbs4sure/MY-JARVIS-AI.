@@ -22,7 +22,11 @@ h1,h2,h3,h4{color:#d9e7ff!important}
 [data-testid="stChatMessageAvatarAssistant"],[data-testid="stChatMessageAvatarUser"]{width:20px;height:20px;min-width:20px}
 [data-testid="stCode"]{background:transparent!important;border:0;font-size:.7rem}
 [data-testid="stCode"] pre{background:transparent!important;padding:8px;font-size:.7rem}
-.st-key-chat_window,.st-key-code_window,.st-key-shortcut_window{background:linear-gradient(135deg,#060c19e8,#101023da);border:1px solid #9d9cc275;border-radius:10px;padding:12px;box-shadow:0 10px 35px #0009,inset 0 0 20px #1e31511c;backdrop-filter:blur(12px);margin-bottom:10px}
+.st-key-chat_window,.st-key-code_window,.st-key-shortcut_window,.st-key-research_window,.st-key-file_window{background:linear-gradient(135deg,#060c19e8,#101023da);border:1px solid #9d9cc275;border-radius:10px;padding:12px;box-shadow:0 10px 35px #0009,inset 0 0 20px #1e31511c;backdrop-filter:blur(12px);margin-bottom:10px}
+.st-key-research_window{border-top:2px solid #8e79e8}.st-key-file_window{border-top:2px solid #64c9dc}
+.st-key-file_window [data-testid="stFileUploader"]{border:1px dashed #6889bb66;border-radius:7px;padding:6px}
+.st-key-file_window [data-testid="stTextArea"] textarea{font:11px/1.7 Consolas,monospace;color:#c6d5ee}
+.hud-log em.failed{color:#ffbf91}.hud-log em.interrupted{color:#c6b4ff}
 .window-title{font:600 10px system-ui;letter-spacing:.07em;color:#d5d9ef;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;text-transform:uppercase}
 .window-title span{font-size:10px;color:#6984ad;letter-spacing:5px}
 .hud-panel{background:linear-gradient(130deg,#050c18eb,#0d1121de);border:1px solid #9b9ec078;border-radius:10px;padding:13px 12px;margin:0 0 14px;box-shadow:0 10px 30px #0008,inset 0 0 18px #5975ba0a;backdrop-filter:blur(12px)}
@@ -55,7 +59,7 @@ h1,h2,h3,h4{color:#d9e7ff!important}
 @keyframes holo-scan{to{top:78%}}@keyframes holo-breathe{50%{opacity:.3}}
 @media(prefers-reduced-motion:reduce){.holo-stage *{animation:none!important}}
 @media(max-width:900px){.block-container{padding:45px 3vw 20px}.hud-ring{width:44px;height:44px}.hud-ring b{font-size:10px}.hud-title{font-size:9px}}
-@media(max-width:640px){.stApp{background-position:center top;background-size:auto 100vh}.block-container{padding:45px 16px 20px}.holo-stage{height:320px}.hud-panel{background:#060c1bef}.st-key-chat_window,.st-key-code_window,.st-key-shortcut_window{background:#080d1cf2}.hud-ring{width:55px;height:55px}.hud-title{font-size:10px}}
+@media(max-width:640px){.stApp{background-position:center top;background-size:auto 100vh}.block-container{padding:45px 16px 20px}.holo-stage{height:320px}.hud-panel{background:#060c1bef}.st-key-chat_window,.st-key-code_window,.st-key-shortcut_window,.st-key-research_window,.st-key-file_window{background:#080d1cf2}.hud-ring{width:55px;height:55px}.hud-title{font-size:10px}}
 </style>'''
 
 
@@ -64,14 +68,14 @@ def render_command_centre(reduced_motion=False):
 
 
 def render_avatar(state="ready", reduced_motion=False):
-    states={"ready":"JARVIS / READY", "thinking":"JARVIS / PROCESSING YOUR REQUEST", "error":"JARVIS / REQUEST NEEDS ATTENTION"}
+    states={"ready":"JARVIS / READY", "thinking":"JARVIS / PROCESSING YOUR REQUEST", "transcribing":"JARVIS / TRANSCRIBING RECORDING", "error":"JARVIS / REQUEST NEEDS ATTENTION"}
     state=state if state in states else "ready"
     classes=f"holo-stage state-{state}"+(" motion-off" if reduced_motion else "")
     st.markdown(f'<div class="{classes}" role="img" aria-label="Photorealistic holographic JARVIS character"><div class="holo-glow"></div><div class="holo-scan"></div><div class="holo-state">{states[state]}</div></div>',unsafe_allow_html=True)
 
 
 def render_side_panels(provider,memory_count,message_count,activity=()):
-    entries=''.join(f'<p class="hud-log"><time>{html.escape(e["time"])}</time> {html.escape(e["action"])} · <em>{html.escape(e["outcome"])}</em></p>' for e in list(activity)[-5:])
+    entries=''.join(f'<p class="hud-log"><time>{html.escape(e["time"])}</time> {html.escape(e["action"])} · <em class="{html.escape(e["outcome"],quote=True)}">{html.escape(e["outcome"])}</em></p>' for e in list(activity)[-5:])
     entries=entries or '<p class="hud-log">No actions in this session yet.</p>'
     st.markdown(f'<div class="hud-panel"><div class="hud-title">REAL-TIME LOGS <small>SESSION ONLY</small></div>{entries}</div>',unsafe_allow_html=True)
 
