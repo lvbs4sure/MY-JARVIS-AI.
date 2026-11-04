@@ -41,7 +41,13 @@ def list_memories(limit: int = 100):
         return db.execute("SELECT id, note, created_at FROM memories ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
 
 
+def _validate_memory_id(memory_id):
+    if isinstance(memory_id, bool) or not isinstance(memory_id, int) or memory_id < 1:
+        raise ValueError("Memory ID must be a positive integer.")
+
+
 def update_memory(memory_id: int, note: str) -> bool:
+    _validate_memory_id(memory_id)
     if not isinstance(note, str):
         raise ValueError("Memory must be text.")
     note = note.strip()
@@ -53,6 +59,7 @@ def update_memory(memory_id: int, note: str) -> bool:
 
 
 def delete_memory(memory_id: int) -> bool:
+    _validate_memory_id(memory_id)
     with connect() as db:
         result = db.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
         return result.rowcount > 0
