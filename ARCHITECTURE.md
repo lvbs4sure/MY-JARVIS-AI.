@@ -1,5 +1,8 @@
 # JARVIS architecture and roadmap
 
+**Runtime integration specification:** [RUNTIME_ARCHITECTURE.md](RUNTIME_ARCHITECTURE.md) defines the component boundaries, event envelope, cancellation semantics, speech/avatar clock contract, permission gateway and verification gates. It is a design contract; proposed interfaces are not yet implemented.
+
+
 ## The ownership model
 The original creator controls this starter repository. Friends can **fork or copy** it into their own repositories and run their own independent installations. Each installation uses its own local SQLite database. Ollama runs locally by default; Gemini is optional and requires that person's private API key. No shared hosted user accounts are assumed or implemented.
 
