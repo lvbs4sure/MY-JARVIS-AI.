@@ -1,7 +1,7 @@
 """Pure tests: facial signals must not masquerade as a rendered avatar."""
 import unittest
 
-from face_motion import FaceMotionController, FacePose, rig_controls
+from face_motion import FaceMotionController, FacePose, rig_controls, viseme_rig_controls
 from lip_sync import LipTimeline, VisemeCue
 
 
@@ -56,6 +56,28 @@ class FaceMotionTests(unittest.TestCase):
             rig_controls(FacePose(2, 0, 0, 0, "ready"))
         with self.assertRaises(ValueError):
             rig_controls(FacePose(0, float("nan"), 0, 0, "ready"))
+
+    def test_viseme_shapes_follow_actual_audio_clock(self):
+        weights = viseme_rig_controls(self.timeline, 150, playing=True)
+        self.assertEqual(len(weights), 22)
+        self.assertEqual(weights["viseme_04"], 1)
+        self.assertEqual(weights["viseme_00"], 0)
+        self.assertEqual(sum(weights.values()), 1)
+        self.assertEqual(viseme_rig_controls(self.timeline, 350, playing=True)["viseme_00"], 1)
+
+    def test_visemes_close_on_pause_and_interruption(self):
+        for kwargs in ({"playing": False}, {"playing": True, "interrupted": True}):
+            weights = viseme_rig_controls(self.timeline, 150, **kwargs)
+            self.assertEqual(weights["viseme_00"], 1)
+            self.assertEqual(weights["viseme_04"], 0)
+
+    def test_viseme_adapter_rejects_untrusted_inputs(self):
+        with self.assertRaises(TypeError):
+            viseme_rig_controls({}, 150, playing=True)
+        with self.assertRaises(ValueError):
+            viseme_rig_controls(self.timeline, 150, playing=1)
+        with self.assertRaises(ValueError):
+            viseme_rig_controls(self.timeline, float("nan"), playing=True)
 
     def test_rejects_bad_clock_states_and_flags(self):
         with self.assertRaises(ValueError):
