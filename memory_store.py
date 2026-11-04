@@ -10,7 +10,16 @@ DB_PATH = Path(os.environ.get("JARVIS_DB_PATH", Path(__file__).resolve().parent 
 @contextmanager
 def connect():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    # New private databases must not be world-readable on POSIX systems.\n    # O_EXCL prevents replacing an existing file or following a pre-existing link.\n    if os.name == "posix":\n        try:\n            fd = os.open(DB_PATH, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)\n        except FileExistsError:\n            pass\n        else:\n            os.close(fd)\n    db = sqlite3.connect(DB_PATH)
+    # New private databases must not be world-readable on POSIX systems.
+    # O_EXCL prevents replacing an existing file or following a pre-existing link.
+    if os.name == "posix":
+        try:
+            fd = os.open(DB_PATH, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            pass
+        else:
+            os.close(fd)
+    db = sqlite3.connect(DB_PATH)
     try:
         with db:
             db.execute("CREATE TABLE IF NOT EXISTS memories (id INTEGER PRIMARY KEY, note TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)")
