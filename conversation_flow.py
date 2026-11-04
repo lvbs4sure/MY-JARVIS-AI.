@@ -19,7 +19,7 @@ def finish_request(state):
         record_activity(state, "Voice request" if job.kind == "voice" else "AI request", "interrupted")
         return True
     if job.kind == "voice":
-        text, error = (None, result.message) if isinstance(result, JobFailure) else result
+        text, error = (None, result.message) if isinstance(result, JobFailure) else (result if isinstance(result, tuple) and len(result) == 2 else (None, "Invalid transcription response."))
         if error or not text or not text.strip():
             state["voice_error"] = error or "No speech recognized. Please record again."
             state["voice_digest"] = None
