@@ -86,6 +86,12 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("status.textContent = 'Speech could not start'", markup)
         self.assertIn("speechSynthesis.addEventListener?.('voiceschanged'", markup)
 
+    def test_empty_speech_and_missing_browser_error_code(self):
+        markup = self.render("Hello")
+        self.assertIn("if (!message.trim())", markup)
+        self.assertIn("No spoken text in this reply.", markup)
+        self.assertIn("String(event.error || 'unknown')", markup)
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
