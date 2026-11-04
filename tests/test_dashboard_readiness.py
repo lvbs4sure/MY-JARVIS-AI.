@@ -8,6 +8,8 @@ class DashboardReadinessTests(unittest.TestCase):
         self.assertEqual(result["chat"][0], "unchecked")
         self.assertEqual(result["avatar"][0], "static")
         self.assertEqual(result["research"][0], "disconnected")
+        self.assertEqual(result["camera"][0], "local-preview")
+        self.assertIn("Start", result["camera"][1])
 
     def test_low_memory_blocks_local_chat(self):
         result = dashboard_readiness("ollama", {}, free_ram_bytes=1024)
