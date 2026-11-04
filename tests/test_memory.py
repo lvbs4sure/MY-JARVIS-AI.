@@ -61,6 +61,27 @@ class MemoryTests(unittest.TestCase):
             finally:
                 memory_store.DB_PATH = original
 
+    def test_reject_non_text_notes_and_invalid_list_limits(self):
+        with tempfile.TemporaryDirectory() as folder:
+            original = memory_store.DB_PATH
+            try:
+                memory_store.DB_PATH = Path(folder) / "validation.db"
+                memory_store.add_memory("preserve this")
+                memory_id = memory_store.list_memories()[0][0]
+                for invalid in (None, 42, b"bytes", ["not", "text"]):
+                    with self.subTest(invalid=repr(invalid)):
+                        with self.assertRaises(ValueError):
+                            memory_store.add_memory(invalid)
+                        with self.assertRaises(ValueError):
+                            memory_store.update_memory(memory_id, invalid)
+                for limit in (0, -1, 1001, True, 1.5, "10"):
+                    with self.subTest(limit=repr(limit)):
+                        with self.assertRaises(ValueError):
+                            memory_store.list_memories(limit)
+                self.assertEqual(memory_store.list_memories()[0][1], "preserve this")
+            finally:
+                memory_store.DB_PATH = original
+
     def test_reject_blank_memory(self):
         with self.assertRaises(ValueError):
             memory_store.add_memory("   ")
