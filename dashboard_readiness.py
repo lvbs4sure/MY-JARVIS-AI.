@@ -26,7 +26,7 @@ def dashboard_readiness(provider=None, environ=None, *, free_ram_bytes=None, loc
         if voice_opt_in and env.get("GEMINI_API_KEY", "").strip()
         else ("blocked", "Transcription disabled. Requires JARVIS_VOICE_PROVIDER=gemini and GEMINI_API_KEY.")
     )
-    result["speech"] = ("browser", "Local speech needs an installed browser voice and a user click. Use the Voice test.")
+    result["speech"] = ("browser", "Local speech needs an installed browser voice and a user click. Use Voice > Test local spoken replies.")
     result["avatar"] = ("static", "Original holographic artwork is static; facial rig and renderer not connected.")
     result["research"] = ("disconnected", "Live research provider not connected.")
     return result
