@@ -94,7 +94,13 @@ def generate_reply(messages, memories, name="JARVIS", personality="Helpful and c
                 return "[Local Ollama fallback: Gemini is temporarily unavailable.]\n\n" + answer
             return "Gemini is temporarily unavailable. Local fallback failed: " + local_error
         if isinstance(exc, errors.APIError):
-            return f"Gemini API error (HTTP {status}). Check model access, quota, and provider availability."
+            if status in (408, 500, 502, 503, 504):
+                return f"Gemini is temporarily unavailable (HTTP {status}). Your message was not answered; please retry. This does not establish an invalid API key or exhausted quota."
+            if status == 429:
+                return "Gemini rate limit or quota reached (HTTP 429). Wait before retrying or check provider limits."
+            if status in (401, 403):
+                return f"Gemini access denied (HTTP {status}). Check the configured key and model permissions."
+            return f"Gemini API error (HTTP {status}). Check provider status and configuration."
         return f"Gemini connection error ({type(exc).__name__}). Check configuration and internet."
 
 
