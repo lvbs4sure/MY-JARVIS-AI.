@@ -10,6 +10,8 @@ class DashboardReadinessTests(unittest.TestCase):
         self.assertEqual(result["research"][0], "disconnected")
         self.assertEqual(result["camera"][0], "local-preview")
         self.assertEqual(result["history"][0], "optional")
+        self.assertEqual(result["files"][0], "local-preview")
+        self.assertIn("not sent to AI", result["files"][1])
         self.assertIn("enable", result["history"][1])
         self.assertIn("Start", result["camera"][1])
 
