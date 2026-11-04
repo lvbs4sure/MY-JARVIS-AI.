@@ -38,6 +38,14 @@ class RequestTests(unittest.TestCase):
             self.assertTrue(app.session_state["chat"][0]["cancelled"])
             self.assertEqual(len(app.session_state["chat"]),1)
 
+
+    def test_invalid_voice_result_does_not_crash_dashboard(self):
+        from types import SimpleNamespace
+        state = {"request_job": SimpleNamespace(finished=SimpleNamespace(is_set=lambda: True), take_result=lambda: None, cancel_event=SimpleNamespace(is_set=lambda: False), kind="voice", metadata={}), "assistant_state": "busy", "chat": []}
+        self.assertTrue(finish_request(state))
+        self.assertEqual(state["assistant_state"], "error")
+        self.assertIn("Invalid transcription", state["voice_error"])
+
     def test_mute_cancels_pending_transcription_without_answer(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(memory_store,"DB_PATH",Path(folder)/"test.db"), patch("jarvis_ai.generate_reply_result") as reply:
             job=RequestJob("voice",lambda token:(token.wait(5) and "late speech",None),{"provider":"gemini"})
