@@ -15,6 +15,13 @@ The new `.env` is created automatically from `.env.example` on first launch.
 **Ollama (local model):** The default is `JARVIS_PROVIDER=ollama`. Install Ollama separately, then run `ollama pull llama3.2:3b` once. JARVIS communicates with local Ollama at `http://127.0.0.1:11434`.
 
 ## Features
+
+For temporary Gemini transport errors, rate limits, and HTTP 5xx outages, set
+`JARVIS_OLLAMA_FALLBACK=on` in the new `.env` to try the configured local Ollama
+model. Install and start Ollama and pull that model first. Fallback replies are
+labelled, and an unavailable local service produces an explicit error. Invalid
+keys and model access errors do not trigger fallback. The Gemini key is never
+included in Ollama requests.
 - Chat with Gemini or a local Ollama model (when configured)
 - Save, edit and delete private SQLite memories
 - Personalize assistant name and conversation style

@@ -27,13 +27,13 @@ class AITests(unittest.TestCase):
         mock_response.read.return_value = json.dumps({"message": {"content": "Hello!"}}).encode()
         mock_response.__enter__.return_value = mock_response
         with patch.dict(os.environ, {"OLLAMA_URL": "http://127.0.0.1:11434", "JARVIS_PROVIDER": "ollama"}):
-            with patch("jarvis_ai.request.urlopen", return_value=mock_response) as urlopen:
+            with patch("jarvis_ai._local_urlopen", return_value=mock_response) as urlopen:
                 self.assertEqual(generate_reply([{"role": "user", "content": "hi"}], []), "Hello!")
                 self.assertEqual(urlopen.call_args.args[0].full_url, "http://127.0.0.1:11434/api/chat")
 
     def test_unknown_provider_rejected_without_network(self):
         with patch.dict(os.environ, {"JARVIS_PROVIDER": "unexpected"}):
-            with patch("jarvis_ai.request.urlopen") as network:
+            with patch("jarvis_ai._local_urlopen") as network:
                 reply = generate_reply([], [])
                 self.assertIn("Invalid JARVIS_PROVIDER", reply)
                 network.assert_not_called()
@@ -43,7 +43,7 @@ class AITests(unittest.TestCase):
         mock_response.read.return_value = json.dumps({"message": {"content": "Green."}}).encode()
         mock_response.__enter__.return_value = mock_response
         with patch.dict(os.environ, {"OLLAMA_URL": "http://127.0.0.1:11434", "JARVIS_PROVIDER": "ollama"}):
-            with patch("jarvis_ai.request.urlopen", return_value=mock_response) as network:
+            with patch("jarvis_ai._local_urlopen", return_value=mock_response) as network:
                 reply = generate_reply(
                     [{"role": "user", "content": "What is my colour?"}],
                     [(1, "My favourite colour is green", "now")],
