@@ -49,3 +49,49 @@ HERO = """
 def render_command_centre():
     st.markdown(CSS, unsafe_allow_html=True)
     st.markdown(HERO, unsafe_allow_html=True)
+
+AVATAR = """
+<div class="jarvis-stage" role="img" aria-label="Glowing holographic JARVIS face illustration">
+<div class="jarvis-ring"></div>
+<svg viewBox="0 0 300 380" class="jarvis-portrait" aria-hidden="true">
+<defs><linearGradient id="jarvisSkin" x2="1" y2="1"><stop stop-color="#3de9ff" stop-opacity=".65"/><stop offset=".55" stop-color="#38348c" stop-opacity=".9"/><stop offset="1" stop-color="#a266ee" stop-opacity=".55"/></linearGradient></defs>
+<path d="M55 300 Q30 315 17 365 L283 365 Q269 315 245 300 L210 280 L90 280Z" fill="url(#jarvisSkin)" stroke="#50dfff" stroke-width="2"/>
+<path d="M115 258 L110 301 Q150 329 190 301 L185 258" fill="url(#jarvisSkin)" stroke="#8cdfff"/>
+<path d="M75 113 Q75 33 150 31 Q225 33 225 113 L216 202 Q194 266 150 274 Q106 266 84 202Z" fill="url(#jarvisSkin)" stroke="#84eaff" stroke-width="2"/>
+<path d="M70 136 Q47 65 100 29 Q150 -7 200 29 Q253 65 230 136 Q214 78 192 77 Q151 101 107 77 Q86 93 70 136Z" fill="#141d58" stroke="#78c7ff" stroke-width="3"/>
+<path d="M95 153 Q115 140 137 153 M163 153 Q185 140 205 153" fill="none" stroke="#b9f5ff" stroke-width="4" stroke-linecap="round"/>
+<circle cx="117" cy="154" r="5" fill="#7cffff"/><circle cx="184" cy="154" r="5" fill="#7cffff"/>
+<path d="M150 160 L141 200 L157 200 M125 225 Q150 237 175 225" fill="none" stroke="#b9eaff" stroke-width="3"/>
+<path d="M87 294 L150 351 L213 294 M56 327 L150 373 L244 327" fill="none" stroke="#75f5ff" stroke-width="2"/>
+<circle cx="150" cy="333" r="12" fill="none" stroke="#a5ffff" stroke-width="3"/>
+</svg>
+<div class="jarvis-scan"></div><div class="jarvis-avatar-label">JARVIS / HOLOGRAPHIC VISUAL CORE</div>
+</div>
+"""
+CSS += """
+<style>
+.jarvis-stage{height:435px;position:relative;overflow:hidden;border:1px solid #347f9d;border-radius:22px;background:radial-gradient(ellipse at 50% 40%,#17446b,#111735 53%,#070e1e);box-shadow:inset 0 0 70px #1687b130}
+.jarvis-ring{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:300px;height:300px;border:1px solid #63eaff;border-radius:50%;box-shadow:0 0 35px #2ab7ff77,inset 0 0 30px #9457ee55;animation:jarvis-pulse 4s ease-in-out infinite}
+.jarvis-portrait{position:absolute;left:50%;top:4%;transform:translateX(-50%);height:90%;width:90%;filter:drop-shadow(0 0 13px #42ceff)}
+.jarvis-scan{position:absolute;left:5%;right:5%;top:8%;height:2px;background:#80efff88;box-shadow:0 0 12px #60eaff;animation:jarvis-sweep 6s linear infinite}
+.jarvis-avatar-label{position:absolute;bottom:12px;left:18px;color:#9ceeff;font-size:.7rem;letter-spacing:.2em;font-weight:700}
+.jarvis-panel{background:#0b2033;border:1px solid #285975;border-radius:14px;padding:16px;margin-bottom:14px}
+.jarvis-panel h4{color:#78eaff;margin:0 0 12px;font-size:.8rem;letter-spacing:.2em}
+.jarvis-panel p{color:#b4d9e8;margin:9px 0;font-size:.87rem}
+.jarvis-panel code{color:#9be7c8;font-size:.83rem}
+@keyframes jarvis-sweep{to{top:90%}}
+@media(prefers-reduced-motion:reduce){.jarvis-ring,.jarvis-scan{animation:none}}
+</style>
+"""
+
+def render_avatar():
+    st.markdown(AVATAR, unsafe_allow_html=True)
+
+def render_side_panels(provider, memory_count, message_count):
+    import html
+    provider = html.escape(str(provider).upper())
+    st.markdown(f"""<div class="jarvis-panel"><h4>SYSTEM MONITOR</h4>
+<p>AI ENGINE · {provider}</p><p>PRIVATE MEMORIES · {int(memory_count)}</p>
+<p>SESSION MESSAGES · {int(message_count)}</p><p>STATUS · DASHBOARD ACTIVE</p></div>
+<div class="jarvis-panel"><h4>TERMINAL / ACTIVITY</h4>
+<code>&gt; JARVIS UI ready<br>&gt; Chat and memory available<br>&gt; Voice upload requires consent<br>&gt; Computer control not enabled</code></div>""", unsafe_allow_html=True)
