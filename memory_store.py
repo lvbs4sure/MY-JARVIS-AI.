@@ -46,6 +46,16 @@ def _validate_memory_id(memory_id):
         raise ValueError("Memory ID must be a positive integer.")
 
 
+
+def get_memory(memory_id: int):
+    """Return one private memory by ID, or None if it does not exist."""
+    _validate_memory_id(memory_id)
+    with connect() as db:
+        return db.execute(
+            "SELECT id, note, created_at FROM memories WHERE id = ?", (memory_id,)
+        ).fetchone()
+
+
 def update_memory(memory_id: int, note: str) -> bool:
     _validate_memory_id(memory_id)
     if not isinstance(note, str):
