@@ -133,6 +133,23 @@ class MemoryTests(unittest.TestCase):
             with patch.object(memory_store, "DB_PATH", first):
                 self.assertEqual(memory_store.get_memory(first_id)[1], "private first installation")
 
+    def test_search_treats_backslashes_and_sql_as_literal_text(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(memory_store, "DB_PATH", Path(folder) / "literal_search.db"):
+                memory_store.add_memory(r"Windows path C:\\Users\\owner")
+                memory_store.add_memory("A note with a single quote: owner's")
+                memory_store.add_memory("Ordinary note")
+                self.assertEqual(
+                    [row[1] for row in memory_store.search_memories(r"C:\\Users")],
+                    [r"Windows path C:\\Users\\owner"],
+                )
+                self.assertEqual(
+                    [row[1] for row in memory_store.search_memories("owner's")],
+                    ["A note with a single quote: owner's"],
+                )
+                self.assertEqual(memory_store.search_memories("' OR 1=1 --"), [])
+                self.assertEqual(memory_store.count_memories(), 3)
+
     def test_reject_blank_memory(self):
         with self.assertRaises(ValueError):
             memory_store.add_memory("   ")
