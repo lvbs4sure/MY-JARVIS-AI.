@@ -5,6 +5,7 @@ map these normalized signals to real eyelid, gaze and facial blendshapes.
 No camera, network, microphone, AI inference or background worker is used.
 """
 from dataclasses import dataclass
+from typing import Mapping
 import math
 
 _STATES = frozenset({"ready", "listening", "thinking", "speaking", "paused", "error"})
@@ -74,3 +75,27 @@ class FaceMotionController:
             # Neutral/silence viseme 0 is never interpreted as mouth movement.
             mouth = _clamp(1.0 - weights.get(0, 0.0), 0.0, 1.0)
         return FacePose(blink, gaze_x, gaze_y, mouth, state)
+
+
+def rig_controls(pose: FacePose) -> Mapping[str, float]:
+    """Translate a validated pose to portable blendshape control names.
+
+    This is a *data adapter*, not a renderer. The approved rig must explicitly
+    bind these names to actual eyelid, gaze and mouth shapes before use.
+    """
+    if not isinstance(pose, FacePose):
+        raise TypeError("Expected FacePose")
+    values = (pose.blink, pose.gaze_x, pose.gaze_y, pose.mouth_open)
+    if any(not math.isfinite(v) for v in values):
+        raise ValueError("Non-finite facial control")
+    if not 0 <= pose.blink <= 1 or not 0 <= pose.mouth_open <= 1:
+        raise ValueError("Blendshape weights must be normalized")
+    if not -1 <= pose.gaze_x <= 1 or not -1 <= pose.gaze_y <= 1:
+        raise ValueError("Gaze controls out of range")
+    return {
+        "blink_left": pose.blink,
+        "blink_right": pose.blink,
+        "gaze_horizontal": pose.gaze_x,
+        "gaze_vertical": pose.gaze_y,
+        "mouth_open": pose.mouth_open,
+    }
