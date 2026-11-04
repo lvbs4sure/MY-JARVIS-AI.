@@ -1,4 +1,6 @@
 import tempfile
+import hashlib
+import io
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -9,6 +11,30 @@ import memory_store
 
 
 class AppTests(unittest.TestCase):
+    def test_voice_consent_send_and_duplicate_guard(self):
+        with tempfile.TemporaryDirectory() as folder:
+            sample = b"nonpersonal test recording"
+            consent_key = "audio_consent_" + hashlib.sha256(sample).hexdigest()
+            with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"), \
+                 patch("streamlit.audio_input", return_value=io.BytesIO(sample)), \
+                 patch("jarvis_ai.transcribe_audio", return_value=("Voice test", None)) as transcribe, \
+                 patch("jarvis_ai.generate_reply", return_value="Voice reply") as reply, \
+                 patch("voice_output.speak_button"):
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py")).run()
+                self.assertTrue(app.button(key="transcribe").disabled)
+                transcribe.assert_not_called()
+                app.checkbox(key=consent_key).check().run()
+                self.assertFalse(app.button(key="transcribe").disabled)
+                app.button(key="transcribe").click().run()
+                self.assertFalse(app.exception)
+                transcribe.assert_called_once_with(sample)
+                reply.assert_called_once()
+                self.assertEqual(app.session_state["chat"][-1]["content"], "Voice reply")
+                self.assertEqual(app.metric[2].value, "2")
+                self.assertTrue(app.button(key="transcribe").disabled)
+                app.run()
+                transcribe.assert_called_once()
+
     def test_memory_search_edit_delete_in_dashboard(self):
         with tempfile.TemporaryDirectory() as folder:
             with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"):
@@ -40,6 +66,7 @@ class AppTests(unittest.TestCase):
                 app.chat_input[0].set_value("Hello").run()
                 self.assertEqual(len(app.exception), 0)
                 self.assertEqual(app.session_state["chat"][-1]["content"], "Hello from JARVIS")
+                self.assertEqual(app.metric[2].value, "2")
                 speak.assert_called_once_with("Hello from JARVIS")
 
 

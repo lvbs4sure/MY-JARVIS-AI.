@@ -116,6 +116,5 @@ if prompt:
     with st.spinner(f"{assistant_name} is thinking…"):
         reply = generate_reply(st.session_state.chat, list_memories(), assistant_name, personality)
     st.session_state.chat.append({"role": "assistant", "content": reply})
-    with st.chat_message("assistant"):
-        st.write(reply)
-        speak_button(reply)
+    # Render the completed exchange and refresh the overview counters together.
+    st.rerun()
