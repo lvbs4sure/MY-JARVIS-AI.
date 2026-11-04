@@ -183,3 +183,10 @@ The following are **requirements**, not claims of implemented or tested features
 **Do not install or run MARK LIV code wholesale.** Its repository advertises a
 CC BY-NC 4.0 non-commercial license; independent development avoids accidental
 license conflicts, especially for a future commercial or hosted AI hub.
+
+### Reliability increment — 2026-11-04
+- Implemented typed request outcomes, bounded transient retries (two attempts, 15 s per attempt), explicit 429/access/model errors and credential-safe error text.
+- Dashboard retry replaces a failed reply, preserves its provider, excludes failures from future prompts, and displays provider/latency/status.
+- Local inference and fallback now enforce the 2 GiB RAM gate in the provider adapter as well as the UI.
+- Windows verification: 75 automated tests passed; production dashboard reloaded at port 8501 with Gemini still selected. Simulated 504/429/offline, retry/no-duplicate and low-RAM gates passed.
+- Live Gemini and new audio upload checks pending explicit cloud-test permission. Provider stability gate remains partially verified, not complete.

@@ -59,7 +59,7 @@ class LocalAITests(unittest.TestCase):
 
     def test_session_local_routing_does_not_use_key_or_change_environment(self):
         with patch.dict(os.environ, {"JARVIS_PROVIDER": "gemini", "GEMINI_API_KEY": "secret-test-key", "OLLAMA_URL": "http://127.0.0.1:11434"}):
-            with patch("jarvis_ai._local_urlopen", return_value=self.response({"message": {"content": "Local reply"}})) as network:
+            with patch("jarvis_ai.local_inference_ready", return_value=True), patch("jarvis_ai._local_urlopen", return_value=self.response({"message": {"content": "Local reply"}})) as network:
                 result = generate_reply([{"role": "user", "content": "Hi"}], [], provider="ollama", local_model="installed-model")
                 self.assertEqual(result, "Local reply")
                 req = network.call_args.args[0]

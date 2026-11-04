@@ -12,6 +12,7 @@ from jarvis_ai import generate_reply, _NoLocalRedirect, _local_urlopen
 class FallbackTests(unittest.TestCase):
     def run_failure(self, failure, enabled="on", local=("Local answer", None)):
         client = MagicMock()
+        client.__enter__.return_value = client
         client.models.generate_content.side_effect = failure
         with patch.dict(os.environ, {"JARVIS_PROVIDER": "gemini", "GEMINI_API_KEY": "secret-test-key", "JARVIS_OLLAMA_FALLBACK": enabled}):
             with patch("google.genai.Client", return_value=client), patch("jarvis_ai.ollama_reply", return_value=local) as fallback:

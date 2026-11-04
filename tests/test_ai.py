@@ -6,6 +6,11 @@ from jarvis_ai import generate_reply, transcribe_audio, ollama_reply
 
 
 class AITests(unittest.TestCase):
+    def setUp(self):
+        guard = patch("jarvis_ai.local_inference_ready", return_value=True)
+        guard.start()
+        self.addCleanup(guard.stop)
+
     def test_voice_transcription_reports_silence_and_closes_client(self):
         with patch.dict(os.environ, {"JARVIS_VOICE_PROVIDER": "gemini", "GEMINI_API_KEY": "test-key"}):
             with patch("google.genai.Client") as create:

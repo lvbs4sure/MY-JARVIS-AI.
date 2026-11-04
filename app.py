@@ -8,11 +8,11 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 from memory_store import add_memory, list_memories, search_memories, count_memories, update_memory, delete_memory
-from jarvis_ai import generate_reply, transcribe_audio
+from jarvis_ai import generate_reply_result, transcribe_audio
 from voice_output import speak_button
 from ui_theme import render_command_centre, render_avatar, render_side_panels, window_title
 from dashboard_panels import render_system_monitor
-from activity_log import record_activity, reply_failed
+from activity_log import record_activity
 from local_ai import inspect_local_ai, hardware_readiness
 from local_runtime import start as start_isolated_ai, benchmark as benchmark_isolated_ai
 
@@ -86,8 +86,14 @@ with right:
             for message in st.session_state.chat:
                 with st.chat_message(message["role"]):
                     st.write(message["content"])
-                    if message["role"]=="assistant":
+                    if message["role"]=="assistant" and message.get("ok", True):
                         speak_button(message["content"])
+        if st.session_state.get("last_request"):
+            st.caption(st.session_state.last_request)
+        retry = False
+        if st.session_state.chat and st.session_state.chat[-1].get("retryable"):
+            st.caption("The last request failed. Retry sends the same conversation to the same provider.")
+            retry = st.button("Retry last message", key="retry_reply")
         typed=st.chat_input(f"Ask {assistant_name} anything…",key="chat_prompt")
     render_side_panels(provider, count_memories(), len(st.session_state.chat), st.session_state.activity)
     with st.container(key="research_window"):
@@ -226,18 +232,27 @@ with right:
                         record_activity(st.session_state,"Conversation cleared")
                         st.rerun()
 prompt=typed or spoken
-if prompt:
-    st.session_state.chat.append({"role":"user","content":prompt})
-    with conversation:
-        with st.chat_message("user"):
-            st.write(prompt)
+if prompt or retry:
+    if retry:
+        failed_message = st.session_state.chat.pop()
+        request_provider = failed_message["request_provider"]
+        request_model = failed_message.get("request_model")
+    else:
+        st.session_state.chat.append({"role":"user","content":prompt})
+        request_provider = provider
+        request_model = st.session_state.get("local_model_override")
+        with conversation:
+            with st.chat_message("user"):
+                st.write(prompt)
     with avatar_mount.container():
         render_avatar("thinking",reduced_motion)
+    history = [{"role": m["role"], "content": m["content"]} for m in st.session_state.chat if m.get("ok", True)]
     with right:
         with st.spinner(f"{assistant_name} is thinking…"):
-            reply=generate_reply(st.session_state.chat,list_memories(),assistant_name,personality,provider=provider,local_model=st.session_state.get("local_model_override"))
-    st.session_state.chat.append({"role":"assistant","content":reply})
-    failed=reply_failed(reply)
-    st.session_state.assistant_state="error" if failed else "ready"
-    record_activity(st.session_state,"AI reply","failed" if failed else "received")
+            outcome=generate_reply_result(history,list_memories(),assistant_name,personality,provider=request_provider,local_model=request_model)
+    st.session_state.chat.append({"role":"assistant","content":outcome.text,"ok":outcome.ok,"retryable":outcome.retryable,
+        "request_provider":request_provider,"request_model":request_model})
+    st.session_state.last_request = f"{outcome.provider.upper()} · {outcome.latency_ms} ms · {outcome.kind}"
+    st.session_state.assistant_state="ready" if outcome.ok else "error"
+    record_activity(st.session_state,"AI reply","received" if outcome.ok else "failed")
     st.rerun()
