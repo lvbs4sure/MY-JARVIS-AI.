@@ -77,6 +77,7 @@ document.getElementById('speak').onclick = () => {{
   if (!('speechSynthesis' in window)) {{ status.textContent = 'Speech is unavailable in this browser.'; return; }}
   const selectedVoice = localVoices.find(voice => voice.voiceURI === voiceMenu.value);
   if (!selectedVoice) {{ status.textContent = 'Select an installed local voice first.'; return; }}
+  current = null;
   speechSynthesis.cancel();
   stopPreview();
   stopped = false;
@@ -85,10 +86,10 @@ document.getElementById('speak').onclick = () => {{
   utterance.voice = selectedVoice;
   utterance.lang = selectedVoice.lang;
   utterance.rate = Number(document.getElementById('rate').value);
-  utterance.onstart = () => {{ active = true; status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }};
-  utterance.onboundary = () => {{ speechPulse(); window.dispatchEvent(new CustomEvent('jarvis-boundary')); }};
-  utterance.onend = () => {{ stopPreview(); status.textContent = stopped ? 'Stopped' : 'Finished'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
-  utterance.onerror = (event) => {{ stopPreview(); status.textContent = stopped ? 'Stopped' : 'Speech error: ' + event.error; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
+  utterance.onstart = () => {{ if (current !== utterance || stopped) return; active = true; status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }};
+  utterance.onboundary = () => {{ if (current !== utterance || stopped) return; speechPulse(); window.dispatchEvent(new CustomEvent('jarvis-boundary')); }};
+  utterance.onend = () => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Finished'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
+  utterance.onerror = (event) => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Speech error: ' + event.error; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
   status.textContent = 'Starting…';
   speechSynthesis.speak(utterance);
 }};
@@ -98,9 +99,10 @@ document.getElementById('pause').onclick = () => {{
 document.getElementById('resume').onclick = () => {{
   if ('speechSynthesis' in window && speechSynthesis.paused) {{ speechSynthesis.resume(); active = true; status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }}
 }};
-window.addEventListener('pagehide', () => {{ if ('speechSynthesis' in window) speechSynthesis.cancel(); stopPreview(); }});
+window.addEventListener('pagehide', () => {{ current = null; stopped = true; if ('speechSynthesis' in window) speechSynthesis.cancel(); stopPreview(); }});
 document.getElementById('stop').onclick = () => {{
   stopped = true;
+  current = null;
   stopPreview();
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   status.textContent = 'Stopped';
