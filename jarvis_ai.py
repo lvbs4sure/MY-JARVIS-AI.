@@ -203,6 +203,8 @@ def transcribe_audio(audio_bytes: bytes, *, muted=False, cancel_event=None):
             "Transcribe this speech. Return only spoken words.",
             types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
         ], os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest"), cancel_event=cancel_event, timeout_ms=30000, attempts=1)
+        if cancel_event is not None and cancel_event.is_set():
+            return None, "Voice request interrupted."
         if failure:
             return None, "Voice transcription: " + failure[0]
         if cancel_event is not None and cancel_event.is_set():
@@ -210,4 +212,6 @@ def transcribe_audio(audio_bytes: bytes, *, muted=False, cancel_event=None):
         text = (response.text or "").strip()
         return (text, None) if text else (None, "No speech recognized. Please record a clearer message.")
     except Exception as exc:
+        if cancel_event is not None and cancel_event.is_set():
+            return None, "Voice request interrupted."
         return None, f"Voice transcription failed ({type(exc).__name__})."
