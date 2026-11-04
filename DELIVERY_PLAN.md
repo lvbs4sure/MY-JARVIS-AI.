@@ -19,7 +19,7 @@ separate products; a local Streamlit session is not a user authentication system
 |---|---|---|---|
 | 0 | Protected foundation, launcher, regression suite, private data boundaries | Working; preserve on every release | Tests pass, old versions untouched, private-file exclusions verified |
 | 1 | Local AI readiness, installed-model discovery and session-only routing | Implemented; 61-test suite passed; missing-runtime browser check passed | Local inference and model switching still need an installed runtime/model benchmark |
-| 2 | Install and benchmark a hardware-appropriate local runtime/model | Not installed | Explicit approval for system software/model downloads; measure RAM, disk, latency and answer quality; no forced default change |
+| 2 | Install and benchmark a hardware-appropriate local runtime/model | Owner-approved isolated Ollama/model installed; live inference deferred by low RAM | Runtime/model integrity and isolation passed; await ≥2 GiB free RAM for latency/answer benchmark; no forced default change |
 | 3 | Reliable model router and provider health | Partial: Gemini/Ollama adapters, timeouts and opt-in fallback | Provider health reflects real probes; no silent cloud upload from local mode; outages/quota/model errors tested |
 | 4 | Voice reliability and accessible device controls | Partial: per-recording cloud consent, transcription, browser speech | Real microphone-to-reply test; audible speaker confirmation; stop/cancel/retry; preserve text input |
 | 5 | Durable personal intelligence | Partial: private SQLite CRUD/search/recall | Topics, preferences, source/provenance, selective export, approved backup/restore, retrieval relevance and isolation tests |
@@ -92,7 +92,9 @@ stage only after its privacy, resource and verification gates pass.
 
 ## Current next checkpoint
 
-Stage 1 is implemented. Seek one concrete installation approval for stage 2.
+Stages 1 and the preparation portion of stage 2 are implemented. The owner
+approved the isolated setup; do not request that same approval again. See
+`LOCAL_AI_SETUP.md` for the verified runtime/model and outstanding RAM gate.
 Readiness checks and session routing do not install software, download models,
 change .env, read personal documents or migrate the memory database.
 

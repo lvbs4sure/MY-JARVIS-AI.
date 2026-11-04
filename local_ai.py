@@ -29,11 +29,11 @@ def inspect_local_ai():
 
 
 def hardware_readiness():
-    result = {"ram_total_gib": None, "ram_available_gib": None, "disk_free_gib": None}
+    result = {"ram_total_gib": None, "ram_available_gib": None, "ram_available_bytes": None, "disk_free_gib": None}
     try:
         import psutil
         memory = psutil.virtual_memory()
-        result.update(ram_total_gib=round(memory.total / 2**30, 1), ram_available_gib=round(memory.available / 2**30, 1))
+        result.update(ram_total_gib=round(memory.total / 2**30, 1), ram_available_gib=round(memory.available / 2**30, 1), ram_available_bytes=memory.available)
     except (ImportError, OSError, RuntimeError, ValueError):
         pass
     try:
@@ -41,5 +41,5 @@ def hardware_readiness():
     except OSError:
         pass
     free = result["ram_available_gib"]
-    result["advice"] = "Free RAM is low. Keep the working provider active until there is room to test a small local model." if free is not None and free < 2 else "Benchmark an installed model before making it the default. No model or software is downloaded by this check."
+    result["advice"] = "Free RAM is low. Keep the working provider active until there is room to test a small local model." if result["ram_available_bytes"] is not None and result["ram_available_bytes"] < 2 * 2**30 else "Benchmark an installed model before making it the default. No model or software is downloaded by this check."
     return result

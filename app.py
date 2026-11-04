@@ -14,6 +14,7 @@ from ui_theme import render_command_centre, render_avatar, window_title
 from dashboard_panels import render_system_monitor
 from activity_log import record_activity, reply_failed
 from local_ai import inspect_local_ai, hardware_readiness
+from local_runtime import start as start_isolated_ai, benchmark as benchmark_isolated_ai
 
 
 def render_memory_controls():
@@ -142,6 +143,31 @@ with right:
                 st.caption("Gemini model: "+os.getenv("GEMINI_MODEL","gemini-flash-lite-latest"))
                 st.divider()
                 st.markdown("#### Local AI readiness")
+                isolated_folder = Path(__file__).resolve().parent / ".local-ai"
+                if (isolated_folder / "installation.json").exists():
+                    if st.button("Start isolated local AI"):
+                        try:
+                            result = start_isolated_ai()
+                            st.success("Isolated Ollama is running. The selected chat provider is unchanged.")
+                            st.session_state.local_ai_status = inspect_local_ai()
+                            st.session_state.local_hardware = hardware_readiness()
+                            record_activity(st.session_state, "Isolated local AI", result["status"])
+                        except (OSError, ValueError, RuntimeError) as exc:
+                            st.warning(str(exc))
+                    if (isolated_folder / "model-receipt.json").exists():
+                        if st.button("Benchmark approved local model"):
+                            try:
+                                with st.spinner("Checking RAM and running a nonpersonal local test…"):
+                                    result = benchmark_isolated_ai()
+                                if result["status"] == "deferred":
+                                    st.info(result["reason"])
+                                elif result["status"] == "passed":
+                                    st.success(f"Local baseline passed in {result['seconds']} seconds. Chat provider unchanged.")
+                                else:
+                                    st.warning("The local baseline did not return the expected answer. Chat provider unchanged.")
+                                record_activity(st.session_state, "Local baseline", result["status"])
+                            except (OSError, ValueError, RuntimeError):
+                                st.warning("The local test could not complete. The working provider is unchanged.")
                 if st.button("Check local AI", key="check_local_ai"):
                     st.session_state.local_ai_status = inspect_local_ai()
                     st.session_state.local_hardware = hardware_readiness()
@@ -155,10 +181,15 @@ with right:
                     if status["models"]:
                         selected_model = st.selectbox("Installed local model", status["models"], key="local_model_choice")
                         if st.button("Use local AI for this session"):
-                            st.session_state.provider_override = "ollama"
-                            st.session_state.local_model_override = selected_model
-                            record_activity(st.session_state, "Session provider changed", "local")
-                            st.rerun()
+                            fresh_hardware = hardware_readiness()
+                            free_bytes = fresh_hardware.get("ram_available_bytes")
+                            if not isinstance(free_bytes, int) or free_bytes < 2 * 2**30:
+                                st.warning("Local chat needs at least 2 GiB free RAM for this setup. The working provider is unchanged.")
+                            else:
+                                st.session_state.provider_override = "ollama"
+                                st.session_state.local_model_override = selected_model
+                                record_activity(st.session_state, "Session provider changed", "local")
+                                st.rerun()
                 if st.session_state.get("provider_override"):
                     st.caption("Session override active. Your .env has not changed.")
                     if st.button("Return to configured provider"):
