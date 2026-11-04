@@ -80,12 +80,12 @@ class ReliabilityTests(unittest.TestCase):
             self.assertEqual(recorder.call_args.kwargs["key"],"voice_capture_1")
             upload.assert_not_called()
 
-    def test_optional_workspaces_follow_primary_controls(self):
+    def test_reference_workspaces_leave_primary_controls_accessible(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(memory_store,"DB_PATH",Path(folder)/"test.db"):
             app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/"app.py"),default_timeout=15).run()
             self.assertFalse(app.exception)
             markup="\n".join(item.value for item in app.markdown)
             self.assertEqual(markup.count("REAL-TIME LOGS"),1)
-            self.assertLess(markup.index("Shortcuts"),markup.index("Research workspace"))
-            optional=next(item for item in app.expander if item.label=="Research and selected-file preview")
-            self.assertFalse(optional.proto.expanded)
+            self.assertLess(markup.index("Shortcuts"),markup.index("Selected file preview"))
+            self.assertTrue(any("RESEARCH / DISCONNECTED" in item.value for item in app.caption))
+            self.assertTrue(any("Selected file preview" in item.value for item in app.markdown))

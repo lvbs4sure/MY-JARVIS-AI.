@@ -29,7 +29,7 @@ class AppTests(unittest.TestCase):
                 self.assertFalse(app.exception)
                 self.assertEqual(app.session_state["assistant_state"], "error")
                 self.assertEqual(app.session_state["activity"][-1]["outcome"], "failed")
-                self.assertTrue(any('state-error' in item.value for item in app.markdown))
+                self.assertTrue(any('needs attention' in item.proto.srcdoc for item in app.get('iframe')))
 
     def test_voice_consent_send_and_duplicate_guard(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -82,6 +82,7 @@ class AppTests(unittest.TestCase):
                  patch("jarvis_ai.generate_reply", return_value="Hello from JARVIS"), \
                  patch("voice_output.speak_button") as speak:
                 app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=10)
+                app.session_state["avatar_style"]="Holographic scene"
                 app.run()
                 self.assertEqual(len(app.exception), 0)
                 app.chat_input[0].set_value("Hello").run()

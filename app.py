@@ -11,6 +11,8 @@ from memory_store import add_memory, list_memories, search_memories, count_memor
 from jarvis_ai import generate_reply_result, transcribe_audio
 from voice_output import speak_button
 from file_preview import preview_upload
+from camera_preview import render_camera_preview
+from animated_avatar import render_moving_face
 from request_jobs import RequestJob
 from conversation_flow import finish_request
 from ui_theme import render_command_centre, render_avatar, window_title
@@ -82,7 +84,10 @@ def request_controls():
 
 
 st.set_page_config(page_title="JARVIS", page_icon="◈", layout="wide", initial_sidebar_state="collapsed")
+avatar_style=st.session_state.get("avatar_style","Animated wireframe face")
 render_command_centre()
+if avatar_style=="Animated wireframe face":
+    st.markdown("<style>.stApp{background:#030814 radial-gradient(ellipse at 50% 40%,#06364766,transparent 65%)} </style>",unsafe_allow_html=True)
 st.session_state.setdefault("chat", [])
 st.session_state.setdefault("voice_digest", None)
 st.session_state.setdefault("assistant_state", "ready")
@@ -112,7 +117,11 @@ with left:
 with centre:
     avatar_mount=st.empty()
     with avatar_mount.container():
-        render_avatar(st.session_state.assistant_state,reduced_motion)
+        if avatar_style=="Animated wireframe face":
+            latest_spoken=next((m["content"] for m in reversed(st.session_state.chat) if m["role"]=="assistant" and m.get("ok",True)),"")
+            render_moving_face(latest_spoken,st.session_state.assistant_state,reduced_motion)
+        else:
+            render_avatar(st.session_state.assistant_state,reduced_motion)
 with right:
     with st.container(key="chat_window"):
         window_title("AI chat interface")
@@ -125,7 +134,7 @@ with right:
                     st.write(message["content"])
                     if message.get("cancelled"):
                         st.caption("Interrupted; omitted from future AI context.")
-                    if message["role"]=="assistant" and message.get("ok", True):
+                    if message["role"]=="assistant" and message.get("ok", True) and avatar_style!="Animated wireframe face":
                         speak_button(message["content"])
         if st.session_state.get("last_request"):
             st.caption(st.session_state.last_request)
@@ -138,14 +147,15 @@ with right:
         typed=st.chat_input(f"Ask {assistant_name} anything…",key="chat_prompt", disabled=busy)
     with st.container(key="code_window"):
         window_title("Code snippet")
-        last_reply=next((item["content"] for item in reversed(st.session_state.chat) if item["role"]=="assistant"), "")
-        code=re.search(r"```(?:[\w+-]+)?\n(.*?)```",last_reply,re.S)
-        if code:
-            st.code(code.group(1)[:4000],language="text",height=140)
-            st.caption("From the latest reply. Display only; never executed.")
-        else:
-            st.code("from system_monitor import snapshot\n\n# Read-only local diagnostics\nstatus = snapshot()\nprint(status)",language="python")
-            st.caption("Example only. Ask JARVIS for code to replace this snippet.")
+        with st.expander("Show code snippet"):
+            last_reply=next((item["content"] for item in reversed(st.session_state.chat) if item["role"]=="assistant"), "")
+            code=re.search(r"```(?:[\w+-]+)?\n(.*?)```",last_reply,re.S)
+            if code:
+                st.code(code.group(1)[:4000],language="text",height=140)
+                st.caption("From the latest reply. Display only; never executed.")
+            else:
+                st.code("from system_monitor import snapshot\n\n# Read-only local diagnostics\nstatus = snapshot()\nprint(status)",language="python")
+                st.caption("Example only. Ask JARVIS for code to replace this snippet.")
     with st.container(key="shortcut_window"):
         window_title("Shortcuts")
         memory_tile,voice_tile,system_tile,settings_tile=st.columns(4,gap="small")
@@ -165,7 +175,10 @@ with right:
                     audio=st.audio_input("Record your message", key=f"voice_capture_{st.session_state.get('voice_epoch', 0)}", disabled=busy)
                 with st.expander("Test local spoken replies"):
                     st.caption("Uses an installed local browser voice. Nothing is sent to a speech service.")
-                    speak_button("JARVIS voice controls are ready.")
+                    if avatar_style=="Animated wireframe face":
+                        st.caption("Use the speech controls beside the animated face.")
+                    else:
+                        speak_button("JARVIS voice controls are ready.")
                 if st.session_state.get("voice_error"):
                     st.warning(st.session_state.voice_error)
                 if audio is not None:
@@ -254,6 +267,9 @@ with right:
                 st.markdown("### Personal settings")
                 assistant_name=st.text_input("Assistant name",os.getenv("JARVIS_NAME","JARVIS"),key="assistant_name",max_chars=50).strip() or "JARVIS"
                 personality=st.selectbox("Personality",["Helpful and concise","Friendly and encouraging","Professional and precise","Curious and creative"],key="personality")
+                st.selectbox("Avatar style",["Animated wireframe face","Holographic scene"],key="avatar_style")
+                st.toggle("Show local camera controls",key="show_local_camera")
+                st.caption("Camera preview stays in this browser. JARVIS visual understanding is not enabled.")
                 st.toggle("Reduce animation",key="reduced_motion")
                 with st.expander("Clear conversation"):
                     st.warning("Only this session's chat is cleared. Saved memories remain.")
@@ -261,26 +277,31 @@ with right:
                         st.session_state.chat=[]
                         record_activity(st.session_state,"Conversation cleared")
                         st.rerun()
+with centre:
+    with st.container(key="research_window"):
+        window_title("Research workspace")
+        st.caption("RESEARCH / DISCONNECTED")
+        st.markdown("Research results will appear here with sources and timestamps when a research provider is connected.")
+        st.info("Live web research is not connected yet. JARVIS will not invent search results or sources.")
 with right:
-    with st.expander("Research and selected-file preview"):
-        with st.container(key="research_window"):
-            window_title("Research workspace")
-            st.caption("RESEARCH / DISCONNECTED")
-            st.markdown("Research results will appear here with sources and timestamps when a research provider is connected.")
-            st.info("Live web research is not connected yet. JARVIS will not invent search results or sources.")
-        with st.container(key="file_window"):
-            window_title("Selected file preview")
-            selected_file = st.file_uploader("Choose a file to inspect", type=["txt", "md", "csv"], key="kavi_file_preview", max_upload_size=1)
-            if selected_file is not None:
-                try:
-                    filename, preview_text, byte_count, truncated = preview_upload(selected_file)
-                    st.text(f"{filename} · {byte_count:,} bytes")
-                    st.caption("Local preview only. Never executed, saved to disk, or sent to AI.")
-                    st.text_area("File contents (read-only preview)", value=preview_text, height=160, disabled=True)
-                    if truncated:
-                        st.caption("Showing the first 4,000 characters.")
-                except ValueError as exc:
-                    st.warning(str(exc))
+    with st.container(key="file_window"):
+        window_title("Selected file preview")
+        selected_file = st.file_uploader("Choose a file to inspect", type=["txt", "md", "csv"], key="kavi_file_preview", max_upload_size=1)
+        if selected_file is not None:
+            try:
+                filename, preview_text, byte_count, truncated = preview_upload(selected_file)
+                st.text(f"{filename} · {byte_count:,} bytes")
+                st.caption("Local preview only. Never executed, saved to disk, or sent to AI.")
+                st.text_area("File contents (read-only preview)", value=preview_text, height=160, disabled=True)
+                if truncated:
+                    st.caption("Showing the first 4,000 characters.")
+            except ValueError as exc:
+                st.warning(str(exc))
+if st.session_state.get("show_local_camera"):
+    with right:
+        with st.container(key="camera_window"):
+            window_title("Local camera / preview only")
+            render_camera_preview()
 prompt=typed or spoken
 if (prompt or retry) and not busy:
     if retry:

@@ -13,7 +13,7 @@ def speech_text(text):
     return text[:12000]
 
 
-def speak_button(text: str, label: str = "🔊 Speak reply"):
+def speech_markup(text: str, label: str = "🔊 Speak reply"):
     # Escape JS string and HTML markup independently.
     safe_text = json.dumps(speech_text(text), ensure_ascii=True).replace("<", "\\u003c").replace(">", "\\u003e")
     safe_label = html.escape(str(label)[:80], quote=True)
@@ -58,23 +58,29 @@ document.getElementById('speak').onclick = () => {{
   utterance.voice = selectedVoice;
   utterance.lang = selectedVoice.lang;
   utterance.rate = Number(document.getElementById('rate').value);
-  utterance.onstart = () => {{ status.textContent = 'Speaking'; }};
-  utterance.onend = () => {{ status.textContent = stopped ? 'Stopped' : 'Finished'; }};
-  utterance.onerror = (event) => {{ status.textContent = stopped ? 'Stopped' : 'Speech error: ' + event.error; }};
+  utterance.onstart = () => {{ status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }};
+  utterance.onboundary = () => {{ window.dispatchEvent(new CustomEvent('jarvis-boundary')); }};
+  utterance.onend = () => {{ status.textContent = stopped ? 'Stopped' : 'Finished'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
+  utterance.onerror = (event) => {{ status.textContent = stopped ? 'Stopped' : 'Speech error: ' + event.error; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}})); }};
   status.textContent = 'Starting…';
   speechSynthesis.speak(utterance);
 }};
 document.getElementById('pause').onclick = () => {{
-  if ('speechSynthesis' in window && speechSynthesis.speaking) {{ speechSynthesis.pause(); status.textContent = 'Paused'; }}
+  if ('speechSynthesis' in window && speechSynthesis.speaking) {{ speechSynthesis.pause(); status.textContent = 'Paused'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'paused'}})); }}
 }};
 document.getElementById('resume').onclick = () => {{
-  if ('speechSynthesis' in window && speechSynthesis.paused) {{ speechSynthesis.resume(); status.textContent = 'Speaking'; }}
+  if ('speechSynthesis' in window && speechSynthesis.paused) {{ speechSynthesis.resume(); status.textContent = 'Speaking'; window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'speaking'}})); }}
 }};
 window.addEventListener('pagehide', () => {{ if ('speechSynthesis' in window) speechSynthesis.cancel(); }});
 document.getElementById('stop').onclick = () => {{
   stopped = true;
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   status.textContent = 'Stopped';
+  window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:'ready'}}));
 }};
 </script></body></html>"""
-    st.iframe(markup, height=190, alt="Speak or stop this assistant reply")
+    return markup
+
+
+def speak_button(text: str, label: str = "🔊 Speak reply"):
+    st.iframe(speech_markup(text,label), height=190, alt="Speak or stop this assistant reply")
