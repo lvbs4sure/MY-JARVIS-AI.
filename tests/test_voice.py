@@ -72,6 +72,14 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("current = null;\n  speechSynthesis.cancel();", markup)
         self.assertIn("current = null; stopped = true;", markup)
 
+    def test_native_pause_resume_and_paused_boundaries(self):
+        markup = self.render("Hello")
+        self.assertIn("utterance.onpause = () =>", markup)
+        self.assertIn("utterance.onresume = () =>", markup)
+        self.assertIn("stopped || speechSynthesis.paused", markup)
+        self.assertIn("speechSynthesis.speaking && !speechSynthesis.paused", markup)
+        self.assertIn("current && !stopped && speechSynthesis.paused", markup)
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
