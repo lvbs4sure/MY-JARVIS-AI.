@@ -162,6 +162,10 @@ def generate_reply(messages, memories, name="JARVIS", personality="Helpful and c
             return finish("Request interrupted.", False, "cancelled")
         if retryable and os.getenv("JARVIS_OLLAMA_FALLBACK", "off").strip().lower() == "on":
             answer, local_error = ollama_reply(messages, memories, name, personality)
+            # The fallback may finish after Stop was pressed; never surface
+            # its stale answer or error for an interrupted turn.
+            if cancel_event is not None and cancel_event.is_set():
+                return finish("Request interrupted.", False, "cancelled")
             if answer:
                 return finish("[Local Ollama fallback: Gemini is temporarily unavailable.]\n\n" + answer, actual_provider="ollama")
             return finish(text + " Local fallback failed: " + local_error, False, kind, retryable, status)
@@ -201,6 +205,8 @@ def transcribe_audio(audio_bytes: bytes, *, muted=False, cancel_event=None):
         ], os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest"), cancel_event=cancel_event, timeout_ms=30000, attempts=1)
         if failure:
             return None, "Voice transcription: " + failure[0]
+        if cancel_event is not None and cancel_event.is_set():
+            return None, "Voice request interrupted."
         text = (response.text or "").strip()
         return (text, None) if text else (None, "No speech recognized. Please record a clearer message.")
     except Exception as exc:
