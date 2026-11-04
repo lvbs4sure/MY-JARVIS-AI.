@@ -6,13 +6,13 @@ import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
-from memory_store import add_memory, list_memories, update_memory, delete_memory
+from memory_store import add_memory, list_memories, search_memories, update_memory, delete_memory
 from jarvis_ai import generate_reply, transcribe_audio
 from voice_output import speak_button
 
 st.set_page_config(page_title="JARVIS", page_icon="🤖", layout="wide")
 st.title("🤖 JARVIS — Your Personal AI")
-st.caption("Your assistant, your memory, your starting point.")
+st.caption("Chat, private memory, and voice — running on your laptop.")
 if "chat" not in st.session_state:
     st.session_state.chat = []
 if "voice_digest" not in st.session_state:
@@ -23,6 +23,7 @@ with st.sidebar:
     assistant_name = st.text_input("Assistant name", os.getenv("JARVIS_NAME", "JARVIS"), max_chars=50).strip() or "JARVIS"
     personality = st.selectbox("Personality", ["Helpful and concise", "Friendly and encouraging", "Professional and precise", "Curious and creative"])
     st.header("Private memory")
+    memory_search = st.text_input("Search memories", max_chars=200, key="memory_search", placeholder="Find a saved note")
     with st.form("remember", clear_on_submit=True):
         note = st.text_area("What should I remember?", max_chars=2000)
         if st.form_submit_button("Save memory"):
@@ -31,7 +32,11 @@ with st.sidebar:
                 st.success("Memory saved.")
             except ValueError as exc:
                 st.warning(str(exc))
-    for memory_id, saved_note, created_at in list_memories():
+    visible_memories = search_memories(memory_search, limit=100) if memory_search.strip() else list_memories()
+    st.caption(f"{len(visible_memories)} saved notes shown. Saving is always your choice.")
+    if memory_search.strip() and not visible_memories:
+        st.info("No matching memories.")
+    for memory_id, saved_note, created_at in visible_memories:
         with st.expander(f"#{memory_id}: {saved_note[:48]}"):
             with st.form(f"edit_{memory_id}"):
                 edited = st.text_area("Edit memory", saved_note, max_chars=2000, key=f"note_{memory_id}")
@@ -59,6 +64,7 @@ with st.sidebar:
         st.caption(f"Local model: {os.getenv('OLLAMA_MODEL', 'llama3.2:3b')}. Chat stays local when Ollama runs on localhost.")
     elif provider == "gemini":
         st.caption("Cloud provider: conversation and saved memory context are sent to Gemini.")
+        st.caption(f"Model: {os.getenv('GEMINI_MODEL', 'gemini-flash-lite-latest')}")
     else:
         st.error("Set JARVIS_PROVIDER to ollama or gemini in your private .env file.")
 
@@ -74,7 +80,8 @@ spoken = None
 if audio is not None:
     raw = audio.getvalue()
     digest = hashlib.sha256(raw).hexdigest()
-    if st.button("Transcribe recording with Gemini (uploads audio)", key="transcribe"):
+    consent = st.checkbox("Allow this recording to be uploaded to Gemini", key=f"audio_consent_{digest}")
+    if st.button("Transcribe recording with Gemini (uploads audio)", key="transcribe", disabled=not consent):
         if digest == st.session_state.voice_digest:
             st.info("This recording was already transcribed. Record another to retry.")
         else:
@@ -84,7 +91,13 @@ if audio is not None:
                 st.warning(error)
             elif spoken:
                 st.session_state.voice_digest = digest
-                st.info(f"You said: {spoken}")
+                st.session_state.voice_draft = spoken
+                spoken = None
+if st.session_state.get("voice_draft"):
+    with st.form("voice_review"):
+        reviewed = st.text_area("Review transcript before sending", key="voice_draft", max_chars=4000)
+        if st.form_submit_button("Send transcript") and reviewed.strip():
+            spoken = reviewed.strip()
 prompt = typed or spoken
 if prompt:
     st.session_state.chat.append({"role": "user", "content": prompt})

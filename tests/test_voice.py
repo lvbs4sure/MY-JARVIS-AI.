@@ -5,10 +5,10 @@ from voice_output import speak_button
 
 class VoiceTests(unittest.TestCase):
     def render(self, text, label="🔊 Speak reply"):
-        with patch("voice_output.components.html") as render:
+        with patch("voice_output.st.iframe") as render:
             speak_button(text, label)
             render.assert_called_once()
-            self.assertEqual(render.call_args.kwargs["height"], 55)
+            self.assertEqual(render.call_args.kwargs["height"], 85)
             return render.call_args.args[0]
 
     def test_escapes_script_tags_in_reply(self):
@@ -38,6 +38,13 @@ class VoiceTests(unittest.TestCase):
         markup = self.render("z" * 15000)
         self.assertIn("z" * 12000, markup)
         self.assertNotIn("z" * 12001, markup)
+
+    def test_speech_status_distinguishes_stop_from_failure(self):
+        markup = self.render("Hello")
+        self.assertIn("stopped ? 'Stopped'", markup)
+        self.assertIn("utterance.onstart", markup)
+        self.assertIn("utterance.onend", markup)
+        self.assertIn("aria-live", markup)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,26 @@ import memory_store
 
 
 class AppTests(unittest.TestCase):
+    def test_memory_search_edit_delete_in_dashboard(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"):
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py")).run()
+                app.text_area[0].set_value("Test memory: favourite fruit is mango")
+                app.button[0].click().run()
+                self.assertFalse(app.exception)
+                identity = memory_store.list_memories()[0][0]
+                app.text_input(key="memory_search").set_value("mango").run()
+                self.assertEqual(len(app.expander), 2)
+                app.text_area(key=f"note_{identity}").set_value("Test memory: favourite fruit is pear")
+                next(button for button in app.button if button.label == "Save changes").click().run()
+                self.assertFalse(app.exception)
+                self.assertEqual(memory_store.list_memories()[0][1], "Test memory: favourite fruit is pear")
+                app.text_input(key="memory_search").set_value("pear").run()
+                app.checkbox(key=f"confirm_delete_{identity}").check().run()
+                app.button(key=f"delete_{identity}").click().run()
+                self.assertFalse(app.exception)
+                self.assertEqual(memory_store.list_memories(), [])
+
     def test_chat_reply_has_speech_button_immediately(self):
         with tempfile.TemporaryDirectory() as folder:
             with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"), \

@@ -76,3 +76,17 @@ Preserve the user's existing JARVIS 6.2, JARVIS 7.0 and old memory database. Wor
 - Never deploy the current single-user Streamlit app as an authenticated multi-user service.
 - Avoid unnecessary purchases or paid hosting before a validated architecture and explicit authorization.
 - Keep a clear distinction between owner-confirmed decisions, historical proposals and verified implementations.
+
+## Today’s isolated Windows increment (2026-11-04)
+
+The foundation dashboard now exposes private memory search, requires explicit
+per-recording upload consent, and lets the user review/edit a transcript before
+sending it as chat. Browser speech reports completion, stop, and failure. The
+launcher reuses the installation’s environment, preserves private configuration,
+skips repeated dependency installation, and binds to loopback. Gemini uses one
+bounded retry for transient connection/service failures. These changes extend
+the usable foundation; they do not implement the advanced command-centre roadmap.
+
+See `tests/WINDOWS_VALIDATION_2026-11-04.md` for observed browser and automated
+results, including pending microphone/audibility checks and intermittent network
+failures. No old installation or private memory database was migrated.

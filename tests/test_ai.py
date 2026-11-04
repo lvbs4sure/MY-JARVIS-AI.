@@ -6,6 +6,23 @@ from jarvis_ai import generate_reply, transcribe_audio, ollama_reply
 
 
 class AITests(unittest.TestCase):
+    def test_voice_transcription_reports_silence_and_closes_client(self):
+        with patch.dict(os.environ, {"JARVIS_VOICE_PROVIDER": "gemini", "GEMINI_API_KEY": "test-key"}):
+            with patch("google.genai.Client") as create:
+                client = create.return_value.__enter__.return_value
+                client.models.generate_content.return_value.text = "  "
+                result, message = transcribe_audio(b"sample")
+                self.assertIsNone(result)
+                self.assertIn("No speech", message)
+                create.return_value.__exit__.assert_called_once()
+                self.assertEqual(create.call_args.kwargs["http_options"]["timeout"], 15000)
+
+    def test_voice_transcription_returns_text(self):
+        with patch.dict(os.environ, {"JARVIS_VOICE_PROVIDER": "gemini", "GEMINI_API_KEY": "test-key"}):
+            with patch("google.genai.Client") as create:
+                create.return_value.__enter__.return_value.models.generate_content.return_value.text = " Hello "
+                self.assertEqual(transcribe_audio(b"sample"), ("Hello", None))
+
     def test_missing_gemini_key(self):
         with patch.dict(os.environ, {"JARVIS_PROVIDER": "gemini", "GEMINI_API_KEY": ""}):
             self.assertIn("GEMINI_API_KEY", generate_reply([], []))
