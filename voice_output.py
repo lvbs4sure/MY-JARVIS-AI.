@@ -2,7 +2,7 @@
 import html
 import json
 import re
-import streamlit as st
+import streamlit.components.v1 as components
 
 
 def speech_text(text):
@@ -117,4 +117,4 @@ document.getElementById('stop').onclick = () => {{
 
 
 def speak_button(text: str, label: str = "🔊 Speak reply"):
-    st.iframe(speech_markup(text,label), height=315, alt="Speak or stop this assistant reply")
+    components.html(speech_markup(text,label), height=315, scrolling=True)
