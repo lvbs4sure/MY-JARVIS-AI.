@@ -56,19 +56,22 @@ for message in st.session_state.chat:
             speak_button(message["content"])
 
 typed = st.chat_input(f"Ask {assistant_name}")
-audio = st.audio_input("Record voice (requires explicit Gemini transcription opt-in)")
+audio = st.audio_input("Record voice (Gemini transcription is optional)")
 spoken = None
 if audio is not None:
     raw = audio.getvalue()
     digest = hashlib.sha256(raw).hexdigest()
-    if digest != st.session_state.voice_digest:
-        st.session_state.voice_digest = digest
-        with st.spinner("Transcribing…"):
-            spoken, error = transcribe_audio(raw)
-        if error:
-            st.warning(error)
-        elif spoken:
-            st.info(f"You said: {spoken}")
+    if st.button("Transcribe recording with Gemini (uploads audio)", key="transcribe"):
+        if digest == st.session_state.voice_digest:
+            st.info("This recording was already transcribed. Record another to retry.")
+        else:
+            with st.spinner("Transcribing…"):
+                spoken, error = transcribe_audio(raw)
+            if error:
+                st.warning(error)
+            elif spoken:
+                st.session_state.voice_digest = digest
+                st.info(f"You said: {spoken}")
 prompt = typed or spoken
 if prompt:
     st.session_state.chat.append({"role": "user", "content": prompt})
