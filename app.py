@@ -56,7 +56,7 @@ for message in st.session_state.chat:
             speak_button(message["content"])
 
 typed = st.chat_input(f"Ask {assistant_name}")
-audio = st.audio_input("Or record a voice message (sent to Gemini for transcription)")
+audio = st.audio_input("Record voice (requires explicit Gemini transcription opt-in)")
 spoken = None
 if audio is not None:
     raw = audio.getvalue()
