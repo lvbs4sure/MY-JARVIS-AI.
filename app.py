@@ -41,13 +41,26 @@ with st.sidebar:
                         st.rerun()
                     except ValueError as exc:
                         st.warning(str(exc))
-            if st.button("Delete memory", key=f"delete_{memory_id}"):
-                delete_memory(memory_id)
-                st.rerun()
-    if st.button("Clear chat"):
-        st.session_state.chat = []
-        st.rerun()
+            if st.checkbox("I want to delete this memory", key=f"confirm_delete_{memory_id}"):
+                if st.button("Confirm delete memory", key=f"delete_{memory_id}"):
+                    delete_memory(memory_id)
+                    st.rerun()
+    with st.expander("Clear conversation"):
+        st.warning("This clears chat history for this browser session only.")
+        if st.button("Confirm clear conversation"):
+            st.session_state.chat = []
+            st.rerun()
     st.caption("Single-user local installation. Each friend should use a separate copy and database.")
+    st.divider()
+    st.header("AI connection")
+    provider = os.getenv("JARVIS_PROVIDER", "ollama").strip().lower()
+    st.write(f"Configured provider: **{provider}**")
+    if provider == "ollama":
+        st.caption(f"Local model: {os.getenv('OLLAMA_MODEL', 'llama3.2:3b')}. Chat stays local when Ollama runs on localhost.")
+    elif provider == "gemini":
+        st.caption("Cloud provider: conversation and saved memory context are sent to Gemini.")
+    else:
+        st.error("Set JARVIS_PROVIDER to ollama or gemini in your private .env file.")
 
 for message in st.session_state.chat:
     with st.chat_message(message["role"]):
@@ -82,4 +95,4 @@ if prompt:
     st.session_state.chat.append({"role": "assistant", "content": reply})
     with st.chat_message("assistant"):
         st.write(reply)
-        speak_button(reply)
+    # A rerun displays the new reply and its speech button exactly once.
