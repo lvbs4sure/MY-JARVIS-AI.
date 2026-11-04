@@ -1,17 +1,22 @@
 """Private per-installation memory store. Never put this database in Git."""
 import os
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 
 DB_PATH = Path(os.environ.get("JARVIS_DB_PATH", Path(__file__).resolve().parent / "jarvis_memory.db"))
 
 
+@contextmanager
 def connect():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(DB_PATH)
-    db.execute("CREATE TABLE IF NOT EXISTS memories (id INTEGER PRIMARY KEY, note TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)")
-    db.commit()
-    return db
+    try:
+        with db:
+            db.execute("CREATE TABLE IF NOT EXISTS memories (id INTEGER PRIMARY KEY, note TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)")
+            yield db
+    finally:
+        db.close()
 
 
 def add_memory(note: str) -> None:

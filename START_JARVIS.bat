@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 title JARVIS - Personal AI
-where py >nul 2>&1
+py -3 --version >nul 2>&1
 if %errorlevel%==0 (
   set "PYTHON=py -3"
 ) else (

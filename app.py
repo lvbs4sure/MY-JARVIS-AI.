@@ -95,4 +95,4 @@ if prompt:
     st.session_state.chat.append({"role": "assistant", "content": reply})
     with st.chat_message("assistant"):
         st.write(reply)
-    # A rerun displays the new reply and its speech button exactly once.
+        speak_button(reply)
