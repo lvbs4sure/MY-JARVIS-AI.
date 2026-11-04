@@ -200,3 +200,6 @@ license conflicts, especially for a future commercial or hosted AI hub.
 - Live approved tests: direct nonpersonal text failed HTTP 504 in 32.241 s; generated audio failed timeout in 32.24 s; dashboard text succeeded in 1.710 s and 10.770 s with genuine Gemini responses. No further cloud test quota was used.
 - Remaining: physical mic/speaker loop, unplug/reconnect, device selection within JARVIS, streaming/cancellation/barge-in/wake word and echo prevention. No claim of MARK LIV voice parity.
 - Blocker: intermittent Gemini service/timeout failures, especially audio. Do not proceed to heavier local inference with less than 2 GiB free RAM or install a new speech engine without approval.
+
+- Integrated-panel layout correction: research/file previews remain available in a collapsed section after Shortcuts; removed the duplicate session-log panel. Main chat, code, Voice and Settings retain their original order.
+- Layout correction Windows-verified at 1280 x 800; final complete suite: 81 tests passed.

@@ -10,7 +10,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 from memory_store import add_memory, list_memories, search_memories, count_memories, update_memory, delete_memory
 from jarvis_ai import generate_reply_result, transcribe_audio
 from voice_output import speak_button
-from ui_theme import render_command_centre, render_avatar, render_side_panels, window_title
+from ui_theme import render_command_centre, render_avatar, window_title
 from dashboard_panels import render_system_monitor
 from activity_log import record_activity
 from local_ai import inspect_local_ai, hardware_readiness
@@ -99,22 +99,6 @@ with right:
             st.caption("The last request failed. Retry sends the same conversation to the same provider.")
             retry = st.button("Retry last message", key="retry_reply")
         typed=st.chat_input(f"Ask {assistant_name} anything…",key="chat_prompt")
-    render_side_panels(provider, count_memories(), len(st.session_state.chat), st.session_state.activity)
-    with st.container(key="research_window"):
-        window_title("Research workspace")
-        st.caption("KAVI-inspired research panel · verified results only")
-        st.info("Live web research is not connected yet. JARVIS will not invent search results or sources.")
-    with st.container(key="file_window"):
-        window_title("Selected file preview")
-        selected_file = st.file_uploader("Choose a file to inspect", type=["txt", "md", "csv"], key="kavi_file_preview")
-        if selected_file is not None:
-            if selected_file.size > 1_000_000:
-                st.warning("File exceeds the 1 MB preview limit. Nothing was saved.")
-            else:
-                preview_bytes = selected_file.getvalue()
-                preview_text = preview_bytes.decode("utf-8", errors="replace")
-                st.caption(f"{selected_file.name} · {selected_file.size} bytes · preview only, not sent to AI or saved")
-                st.text_area("File contents (read-only preview)", value=preview_text[:4000], height=130, disabled=True)
     with st.container(key="code_window"):
         window_title("Code snippet")
         last_reply=next((item["content"] for item in reversed(st.session_state.chat) if item["role"]=="assistant"), "")
@@ -244,6 +228,23 @@ with right:
                         st.session_state.chat=[]
                         record_activity(st.session_state,"Conversation cleared")
                         st.rerun()
+with right:
+    with st.expander("Research and selected-file preview"):
+        with st.container(key="research_window"):
+            window_title("Research workspace")
+            st.caption("KAVI-inspired research panel · verified results only")
+            st.info("Live web research is not connected yet. JARVIS will not invent search results or sources.")
+        with st.container(key="file_window"):
+            window_title("Selected file preview")
+            selected_file = st.file_uploader("Choose a file to inspect", type=["txt", "md", "csv"], key="kavi_file_preview")
+            if selected_file is not None:
+                if selected_file.size > 1_000_000:
+                    st.warning("File exceeds the 1 MB preview limit. Nothing was saved.")
+                else:
+                    preview_bytes = selected_file.getvalue()
+                    preview_text = preview_bytes.decode("utf-8", errors="replace")
+                    st.caption(f"{selected_file.name} · {selected_file.size} bytes · preview only, not sent to AI or saved")
+                    st.text_area("File contents (read-only preview)", value=preview_text[:4000], height=130, disabled=True)
 prompt=typed or spoken
 if prompt or retry:
     if retry:
