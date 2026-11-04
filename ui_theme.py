@@ -7,7 +7,7 @@ CSS = '''<style>
 .stApp{background:#030814 url('/app/static/jarvis-scene.png') center center / cover fixed no-repeat;color:#d9e7ff}
 [data-testid="stHeader"]{background:transparent;height:30px}
 [data-testid="stToolbar"]{opacity:.25} [data-testid="stToolbar"]:hover{opacity:1}
-.block-container{max-width:none;padding:5.5vh 4vw 2vh}
+.block-container{max-width:none;padding:4.5vh 4vw 2vh}
 [data-testid="stSidebar"]{background:#060c1bea;border-right:1px solid #8c8de940}
 h1,h2,h3,h4{color:#d9e7ff!important}
 [data-testid="stVerticalBlock"]{gap:.55rem}
@@ -22,11 +22,15 @@ h1,h2,h3,h4{color:#d9e7ff!important}
 [data-testid="stChatMessageAvatarAssistant"],[data-testid="stChatMessageAvatarUser"]{width:20px;height:20px;min-width:20px}
 [data-testid="stCode"]{background:transparent!important;border:0;font-size:.7rem}
 [data-testid="stCode"] pre{background:transparent!important;padding:8px;font-size:.7rem}
-.st-key-chat_window,.st-key-code_window,.st-key-shortcut_window,.st-key-research_window,.st-key-file_window{background:linear-gradient(135deg,#060c19e8,#101023da);border:1px solid #9d9cc275;border-radius:10px;padding:12px;box-shadow:0 10px 35px #0009,inset 0 0 20px #1e31511c;backdrop-filter:blur(12px);margin-bottom:10px}
+.st-key-chat_window,.st-key-code_window,.st-key-shortcut_window,.st-key-research_window,.st-key-file_window{background:linear-gradient(135deg,#060c19e8,#101023da);border:1px solid #9d9cc275;border-radius:9px;padding:10px;box-shadow:0 10px 35px #0009,inset 0 0 20px #1e31511c;backdrop-filter:blur(12px);margin-bottom:10px}
 .st-key-research_window{border-top:2px solid #8e79e8}.st-key-file_window{border-top:2px solid #64c9dc}
 .st-key-file_window [data-testid="stFileUploader"]{border:1px dashed #6889bb66;border-radius:7px;padding:6px}
 .st-key-file_window [data-testid="stTextArea"] textarea{font:11px/1.7 Consolas,monospace;color:#c6d5ee}
 .hud-log em.failed{color:#ffbf91}.hud-log em.interrupted{color:#c6b4ff}
+.session-strip{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 7px}.session-chip{font:10px/1.5 system-ui;color:#a7c8df;border:1px solid #6685a443;border-radius:20px;padding:2px 7px;background:#0a1728a8}.session-chip.busy{color:#d3bbff;border-color:#ae87ef70}
+.st-key-code_window{padding:4px 9px!important;margin-bottom:8px!important}
+.st-key-shortcut_window [data-testid="stVerticalBlock"]{gap:6px}
+[data-testid="stPopoverBody"]{max-width:min(430px,94vw);max-height:78vh;overflow-y:auto}
 .window-title{font:600 10px system-ui;letter-spacing:.07em;color:#d5d9ef;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;text-transform:uppercase}
 .window-title span{font-size:10px;color:#6984ad;letter-spacing:5px}
 .hud-panel{background:linear-gradient(130deg,#050c18eb,#0d1121de);border:1px solid #9b9ec078;border-radius:10px;padding:13px 12px;margin:0 0 14px;box-shadow:0 10px 30px #0008,inset 0 0 18px #5975ba0a;backdrop-filter:blur(12px)}
@@ -48,7 +52,8 @@ h1,h2,h3,h4{color:#d9e7ff!important}
 .state-thinking .holo-glow{background:radial-gradient(ellipse at 50% 40%,#a467ff35,transparent 65%);animation-duration:1.4s}
 .state-error .holo-state{color:#ffd2a4}.motion-off *{animation:none!important}
 .shortcut-caption{font:9px system-ui;color:#8fa2c4;margin:0 0 4px}
-.st-key-shortcut_window [data-testid="stHorizontalBlock"]{gap:5px}
+.st-key-shortcut_window [data-testid="stHorizontalBlock"]{gap:5px;flex-wrap:nowrap!important}
+.st-key-shortcut_window [data-testid="stColumn"]{min-width:0!important;flex:1 1 0!important;width:auto!important}
 .st-key-shortcut_window button{font-size:10px!important;min-height:42px;padding:4px!important;background:#0b1227aa;border:1px solid #5d65a84d;border-radius:6px}
 .st-key-shortcut_window button:hover{border-color:#a58aeb;color:#dcceff}
 .st-key-shortcut_window button [data-has-shortcut]{display:flex;flex-direction:column;align-items:center;gap:4px}
@@ -82,3 +87,10 @@ def render_side_panels(provider,memory_count,message_count,activity=()):
 
 def window_title(title):
     st.markdown(f'<div class="window-title">{html.escape(title)}<span>− ◇ ×</span></div>',unsafe_allow_html=True)
+
+
+def render_session_strip(provider, muted=False, history_enabled=False, busy=False):
+    """Selected route and actual session settings, never a health guarantee."""
+    labels=[str(provider).upper(),"MIC MUTED" if muted else "MIC MANUAL","HISTORY ON" if history_enabled else "HISTORY OFF","BUSY" if busy else "IDLE"]
+    chips=''.join(f'<span class="session-chip{ " busy" if busy and label=="BUSY" else ""}">{html.escape(label)}</span>' for label in labels)
+    st.markdown(f'<div class="session-strip" aria-label="Session settings">{chips}</div>',unsafe_allow_html=True)

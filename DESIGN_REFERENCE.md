@@ -22,3 +22,12 @@ not permission to replace the face or redesign the character. Keep this scene
 as the active default. Do not substitute the experimental wireframe avatar
 without a new explicit request from the owner. Add functional features around
 the approved scene and preserve the compact research/file section.
+
+## Compact organisation — 2026-11-04
+
+Owner requested small, well-arranged features around the same approved scene.
+The native tool dock now has two rows of four buttons: Memory, Voice, System,
+Settings / History, Files, Research, Camera. Details open on demand in bounded
+panels. The same four-column button grid is retained on narrow screens. A
+small session strip reports selected provider, manual/muted mic mode, history
+preference and idle/busy state; these are not provider-health claims.
