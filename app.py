@@ -9,16 +9,18 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 from memory_store import add_memory, list_memories, search_memories, update_memory, delete_memory
 from jarvis_ai import generate_reply, transcribe_audio
 from voice_output import speak_button
+from ui_theme import render_command_centre
 
 st.set_page_config(page_title="JARVIS", page_icon="🤖", layout="wide")
-st.title("🤖 JARVIS — Your Personal AI")
-st.caption("Chat, private memory, and voice — running on your laptop.")
+render_command_centre()
 if "chat" not in st.session_state:
     st.session_state.chat = []
 if "voice_digest" not in st.session_state:
     st.session_state.voice_digest = None
 
 with st.sidebar:
+    st.markdown("### ◈ JARVIS CONTROL")
+    st.caption("PERSONAL COMMAND CENTRE")
     st.header("Personalize")
     assistant_name = st.text_input("Assistant name", os.getenv("JARVIS_NAME", "JARVIS"), max_chars=50).strip() or "JARVIS"
     personality = st.selectbox("Personality", ["Helpful and concise", "Friendly and encouraging", "Professional and precise", "Curious and creative"])
@@ -68,12 +70,22 @@ with st.sidebar:
     else:
         st.error("Set JARVIS_PROVIDER to ollama or gemini in your private .env file.")
 
+st.markdown('<div class="jarvis-section">SYSTEM OVERVIEW</div>', unsafe_allow_html=True)
+status_a, status_b, status_c = st.columns(3)
+with status_a:
+    st.metric("AI ENGINE", provider.upper())
+with status_b:
+    st.metric("PRIVATE MEMORIES", len(list_memories()))
+with status_c:
+    st.metric("SESSION MESSAGES", len(st.session_state.chat))
+st.markdown('<div class="jarvis-section">CONVERSATION CONSOLE</div>', unsafe_allow_html=True)
 for message in st.session_state.chat:
     with st.chat_message(message["role"]):
         st.write(message["content"])
         if message["role"] == "assistant":
             speak_button(message["content"])
 
+st.markdown('<div class="jarvis-section">VOICE INTERFACE</div>', unsafe_allow_html=True)
 typed = st.chat_input(f"Ask {assistant_name}")
 audio = st.audio_input("Record your message")
 spoken = None
