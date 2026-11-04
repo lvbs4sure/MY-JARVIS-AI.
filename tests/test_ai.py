@@ -53,6 +53,25 @@ class AITests(unittest.TestCase):
                 self.assertEqual(generate_reply([{"role": "user", "content": "hi"}], []), "Hello!")
                 self.assertEqual(urlopen.call_args.args[0].full_url, "http://127.0.0.1:11434/api/chat")
 
+    def test_local_reply_cancelled_while_request_in_flight_is_discarded(self):
+        from threading import Event
+        from jarvis_ai import generate_reply_result
+
+        cancelled = Event()
+
+        def finish_after_stop(*args, **kwargs):
+            cancelled.set()
+            return "Stale private answer", None
+
+        with patch("jarvis_ai.ollama_reply", side_effect=finish_after_stop):
+            result = generate_reply_result(
+                [{"role": "user", "content": "hello"}], [],
+                provider="ollama", cancel_event=cancelled,
+            )
+        self.assertFalse(result.ok)
+        self.assertEqual(result.kind, "cancelled")
+        self.assertNotIn("Stale private answer", result.text)
+
     def test_unknown_provider_rejected_without_network(self):
         with patch.dict(os.environ, {"JARVIS_PROVIDER": "unexpected"}):
             with patch("jarvis_ai._local_urlopen") as network:
