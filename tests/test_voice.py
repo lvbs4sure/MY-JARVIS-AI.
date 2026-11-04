@@ -8,7 +8,7 @@ class VoiceTests(unittest.TestCase):
         with patch("voice_output.st.iframe") as render:
             speak_button(text, label)
             render.assert_called_once()
-            self.assertEqual(render.call_args.kwargs["height"], 85)
+            self.assertEqual(render.call_args.kwargs["height"], 60)
             return render.call_args.args[0]
 
     def test_escapes_script_tags_in_reply(self):

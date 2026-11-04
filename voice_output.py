@@ -8,10 +8,10 @@ def speak_button(text: str, label: str = "🔊 Speak reply"):
     # Escape JS string and HTML markup independently.
     safe_text = json.dumps(str(text)[:12000], ensure_ascii=True).replace("<", "\\u003c").replace(">", "\\u003e")
     safe_label = html.escape(str(label)[:80], quote=True)
-    markup = f"""<!doctype html><html><body style="margin:0">
-<button id="speak" style="font:inherit;padding:9px 14px;border-radius:9px;cursor:pointer">{safe_label}</button>
-<button id="stop" style="font:inherit;padding:9px 14px;border-radius:9px;cursor:pointer">Stop</button>
-<span id="status" role="status" aria-live="polite" style="font:14px sans-serif;margin-left:8px">Ready</span>
+    markup = f"""<!doctype html><html><body style="margin:0;background:transparent;color:#a9bddb;font:11px system-ui">
+<button id="speak" style="font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px 8px;border-radius:5px;cursor:pointer">{safe_label}</button>
+<button id="stop" style="font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px 8px;border-radius:5px;cursor:pointer">Stop</button>
+<span id="status" role="status" aria-live="polite" style="margin-left:6px">Ready</span>
 <script>
 const message = {safe_text};
 const status = document.getElementById('status');
@@ -36,4 +36,4 @@ document.getElementById('stop').onclick = () => {{
   status.textContent = 'Stopped';
 }};
 </script></body></html>"""
-    st.iframe(markup, height=85, alt="Speak or stop this assistant reply")
+    st.iframe(markup, height=60, alt="Speak or stop this assistant reply")

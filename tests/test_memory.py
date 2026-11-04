@@ -8,6 +8,14 @@ import memory_store
 
 
 class MemoryTests(unittest.TestCase):
+    def test_total_count_is_not_limited_to_the_visible_page(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(memory_store, "DB_PATH", Path(folder) / "notes.db"):
+                with memory_store.connect() as db:
+                    db.executemany("INSERT INTO memories(note) VALUES (?)", [(f"Test {index}",) for index in range(101)])
+                self.assertEqual(len(memory_store.list_memories()), 100)
+                self.assertEqual(memory_store.count_memories(), 101)
+
     def test_create_update_delete_and_isolation(self):
         with tempfile.TemporaryDirectory() as folder:
             original = memory_store.DB_PATH

@@ -11,6 +11,26 @@ import memory_store
 
 
 class AppTests(unittest.TestCase):
+    def test_monitor_can_pause_without_sampling_and_preserve_private_memory(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"), patch("dashboard_panels.SystemMonitor.sample") as sample:
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=10)
+                app.session_state["live_monitoring"] = False
+                app.run()
+                self.assertFalse(app.exception)
+                sample.assert_not_called()
+                self.assertEqual(memory_store.list_memories(), [])
+
+    def test_failed_reply_sets_avatar_state_and_actual_activity(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"), patch("jarvis_ai.generate_reply", return_value="Gemini API error (HTTP 503)."), patch("voice_output.speak_button"):
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=10).run()
+                app.chat_input[0].set_value("Hello").run()
+                self.assertFalse(app.exception)
+                self.assertEqual(app.session_state["assistant_state"], "error")
+                self.assertEqual(app.session_state["activity"][-1]["outcome"], "failed")
+                self.assertTrue(any('state-error' in item.value for item in app.markdown))
+
     def test_voice_consent_send_and_duplicate_guard(self):
         with tempfile.TemporaryDirectory() as folder:
             sample = b"nonpersonal test recording"
@@ -20,7 +40,7 @@ class AppTests(unittest.TestCase):
                  patch("jarvis_ai.transcribe_audio", return_value=("Voice test", None)) as transcribe, \
                  patch("jarvis_ai.generate_reply", return_value="Voice reply") as reply, \
                  patch("voice_output.speak_button"):
-                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py")).run()
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=10).run()
                 self.assertTrue(app.button(key="transcribe").disabled)
                 transcribe.assert_not_called()
                 app.checkbox(key=consent_key).check().run()
@@ -38,13 +58,13 @@ class AppTests(unittest.TestCase):
     def test_memory_search_edit_delete_in_dashboard(self):
         with tempfile.TemporaryDirectory() as folder:
             with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"):
-                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py")).run()
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=10).run()
                 app.text_area[0].set_value("Test memory: favourite fruit is mango")
                 app.button[0].click().run()
                 self.assertFalse(app.exception)
                 identity = memory_store.list_memories()[0][0]
                 app.text_input(key="memory_search").set_value("mango").run()
-                self.assertEqual(len(app.expander), 2)
+                self.assertEqual(len([item for item in app.expander if item.label.startswith("#")]), 1)
                 app.text_area(key=f"note_{identity}").set_value("Test memory: favourite fruit is pear")
                 next(button for button in app.button if button.label == "Save changes").click().run()
                 self.assertFalse(app.exception)
@@ -60,7 +80,7 @@ class AppTests(unittest.TestCase):
             with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"), \
                  patch("jarvis_ai.generate_reply", return_value="Hello from JARVIS"), \
                  patch("voice_output.speak_button") as speak:
-                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"))
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=10)
                 app.run()
                 self.assertEqual(len(app.exception), 0)
                 app.chat_input[0].set_value("Hello").run()
@@ -76,7 +96,7 @@ class AppTests(unittest.TestCase):
                  patch("jarvis_ai.transcribe_audio", return_value=("Can you hear me?", None)) as transcribe, \
                  patch("jarvis_ai.generate_reply", return_value="Yes, I can hear you."), \
                  patch("voice_output.speak_button"):
-                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py")).run()
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=10).run()
                 # The microphone widget requires a browser to supply audio bytes.
                 # Verify the UI no longer requires a second transcript-review form.
                 self.assertFalse(app.exception)

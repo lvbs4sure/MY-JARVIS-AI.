@@ -127,3 +127,29 @@ failures. No old installation or private memory database was migrated.
 - **G:** separately designed hosted owner-controlled platform after security review and explicit provisioning approval.
 
 **Acceptance:** tests + Windows runtime checks + human-visible verification. Passing CI alone is not proof of hardware, speaker, telemetry or hosted readiness. Do not claim a feature is complete until it is verified in its target environment. Never modify the user's old installations, private documents, memory database, or .env without the relevant scope and backup.
+
+## Reference-led holographic revision (2026-11-04)
+
+The owner rejected the earlier vector-face layout and supplied the cinematic
+LISA reference again. The approved generated scene now supplies a realistic
+JARVIS holographic character and cyberpunk workstation backdrop. Floating
+functional windows follow that composition: real system overview/diagnostics
+and session logs on the left, chat/code/shortcuts on the right. Memory, voice,
+system settings and personalization open from shortcut controls.
+
+The character is raster artwork with animated scan/glow effects and request-driven
+ready/thinking/error status; it is not a fully rigged 3D face or lip-sync system.
+The code window displays a read-only example or a fenced code block from the
+latest AI reply. Nothing in it is executed automatically.
+
+Telemetry uses psutil and filesystem counters, refreshed in a separate two-second
+Streamlit fragment. CPU sampling is bounded to 0.1 seconds. Network rates require
+two monotonic counter samples; counter resets and missing sensors remain N/A.
+Temperature is unavailable on the tested Windows hardware. Network link status
+does not imply Gemini or internet connectivity. Sensor history is bounded to 30
+in-memory samples; activity stores 30 action records without prompt/note contents.
+
+The scene is a bundled public visual asset; private files are never placed in
+the static asset directory. The original .env and stored memory contents are
+checked for preservation. Advanced research, file actions, continuous voice,
+permissioned computer control and hosted accounts remain later architecture phases.

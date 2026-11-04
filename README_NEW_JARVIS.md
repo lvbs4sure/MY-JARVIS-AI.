@@ -15,6 +15,11 @@ without starting a second server. Startup never imports old JARVIS data or keys.
 
 ## Everyday use
 
+The cinematic dashboard uses floating windows. Open **Memory**, **Voice**,
+**System**, or **Settings** from the Shortcuts window at the lower right. Memory
+management and personalization are now in those popovers. System can pause live
+telemetry; Settings can reduce animation. The top-left arrow opens session totals.
+
 - Type in **Ask JARVIS** and press Enter. Cloud chat needs an internet connection.
 - Save notes with **What should I remember? → Save memory**. Search them with
   **Search memories**. Expand a note to edit it or confirm its deletion. Notes

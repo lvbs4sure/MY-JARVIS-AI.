@@ -29,6 +29,11 @@ def add_memory(note: str) -> None:
         db.execute("INSERT INTO memories(note) VALUES (?)", (note,))
 
 
+def count_memories():
+    with connect() as db:
+        return db.execute("SELECT COUNT(*) FROM memories").fetchone()[0]
+
+
 def list_memories(limit: int = 100):
     if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 1000:
         raise ValueError("Memory list limit must be between 1 and 1000.")

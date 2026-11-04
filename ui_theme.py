@@ -1,97 +1,80 @@
-"""Original JARVIS command-centre visual layer. No external assets or network calls."""
+"""Reference-led holographic workspace. Decorative scene; genuine live controls."""
+import html
 import streamlit as st
 
-CSS = """
-<style>
-:root {color-scheme: dark;}
-.stApp {background: radial-gradient(ellipse at 55% -20%,#163650 0%,#081522 37%,#050b13 85%);color:#e7f7ff;}
-[data-testid="stHeader"] {background:transparent;}
-[data-testid="stSidebar"] {background:linear-gradient(180deg,#091d2c,#07111d);border-right:1px solid #1a5063;}
-.block-container {max-width:1450px;padding-top:1.3rem;}
-h1,h2,h3 {color:#d9faff!important;letter-spacing:.035em;}
-[data-testid="stMetric"] {background:#0b2030;border:1px solid #1b566a;border-radius:15px;padding:12px 18px;}
-[data-testid="stMetricLabel"] {color:#89b8c9;}
-[data-testid="stMetricValue"] {color:#70f4f6;}
-[data-testid="stChatMessage"] {border:1px solid #194356;background:#0b1c2c;border-radius:16px;margin-bottom:12px;}
-.stButton>button[kind="primary"], [data-testid="stChatInput"] {border-color:#31b8cc;}
-.stButton>button:hover {border-color:#79faff;color:#a6ffff;}
-[data-testid="stTextInput"] input,[data-testid="stTextArea"] textarea {background:#081725;}
-.jarvis-brand {font-size:.73rem;letter-spacing:.33em;color:#67d5e6;font-weight:700;}
-.jarvis-hero {display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:20px 26px;border:1px solid #24576a;border-radius:22px;background:linear-gradient(110deg,rgba(10,42,61,.93),rgba(6,19,32,.96));box-shadow:0 0 38px rgba(32,195,229,.08);}
-.jarvis-orb {width:145px;height:145px;position:relative;flex:none;display:grid;place-items:center;}
-.jarvis-orb:before,.jarvis-orb:after {content:"";position:absolute;border-radius:50%;inset:5px;border:2px solid #4ddfee;border-left-color:transparent;box-shadow:0 0 18px #1a8fb1;animation:jarvis-spin 13s linear infinite;}
-.jarvis-orb:after {inset:19px;border:1px dashed #b1f9ff;border-top-color:transparent;animation-direction:reverse;animation-duration:9s;}
-.jarvis-core {height:76px;width:76px;border-radius:50%;display:grid;place-items:center;color:#d7ffff;font-weight:800;font-size:26px;letter-spacing:.06em;background:radial-gradient(circle,#2ba8c0 0%,#0a4e6a 48%,#071728 75%);box-shadow:0 0 26px #158ba9, inset 0 0 15px #70ecff;animation:jarvis-pulse 3s ease-in-out infinite;}
-.jarvis-title {font-size:clamp(2rem,4vw,3.6rem);font-weight:800;line-height:1.08;letter-spacing:.14em;color:#e5fdff;text-shadow:0 0 20px #16718e;margin:7px 0;}
-.jarvis-sub {color:#a3c7d4;font-size:.96rem;max-width:550px;}
-.jarvis-tag {display:inline-block;border:1px solid #246a79;border-radius:50px;padding:4px 10px;color:#85f0e7;font-size:.73rem;letter-spacing:.08em;margin-top:12px;}
-.jarvis-section {font-size:.76rem;letter-spacing:.24em;color:#78dce9;font-weight:800;margin:20px 0 10px;}
-@keyframes jarvis-spin {to {transform:rotate(360deg)}}
-@keyframes jarvis-pulse {50% {filter:brightness(1.45);transform:scale(1.045)}}
-@media(prefers-reduced-motion:reduce) {.jarvis-orb:before,.jarvis-orb:after,.jarvis-core {animation:none}}
-@media(max-width:650px) {.jarvis-hero{padding:14px}.jarvis-orb{width:105px;height:105px}.jarvis-title{font-size:2rem}}
-</style>
-"""
+CSS = '''<style>
+:root{color-scheme:dark}
+.stApp{background:#030814 url('/app/static/jarvis-scene.png') center center / cover fixed no-repeat;color:#d9e7ff}
+[data-testid="stHeader"]{background:transparent;height:30px}
+[data-testid="stToolbar"]{opacity:.25} [data-testid="stToolbar"]:hover{opacity:1}
+.block-container{max-width:none;padding:5.5vh 4vw 2vh}
+[data-testid="stSidebar"]{background:#060c1bea;border-right:1px solid #8c8de940}
+h1,h2,h3,h4{color:#d9e7ff!important}
+[data-testid="stVerticalBlock"]{gap:.55rem}
+[data-testid="stHorizontalBlock"]{gap:1.5rem}
+[data-testid="stTextInput"] input,[data-testid="stTextArea"] textarea{background:#081021dd;font-size:.8rem}
+[data-testid="stPopoverBody"]{background:#070d1df5;border:1px solid #7e8dbb80}
+[data-testid="stChatInput"]{background:#10162be6;border:1px solid #747bd366;border-radius:5px}
+[data-testid="stChatInput"] textarea{font-size:.8rem}
+[data-testid="stChatInputSubmitButton"]{background:linear-gradient(130deg,#4c2bba,#7b3eda);border-radius:4px;color:white}
+[data-testid="stChatMessage"]{background:transparent;padding:8px 6px;border:0;gap:7px}
+[data-testid="stChatMessage"] p{font-size:.8rem;line-height:1.6}
+[data-testid="stChatMessageAvatarAssistant"],[data-testid="stChatMessageAvatarUser"]{width:20px;height:20px;min-width:20px}
+[data-testid="stCode"]{background:transparent!important;border:0;font-size:.7rem}
+[data-testid="stCode"] pre{background:transparent!important;padding:8px;font-size:.7rem}
+.st-key-chat_window,.st-key-code_window,.st-key-shortcut_window{background:linear-gradient(135deg,#060c19e8,#101023da);border:1px solid #9d9cc275;border-radius:10px;padding:12px;box-shadow:0 10px 35px #0009,inset 0 0 20px #1e31511c;backdrop-filter:blur(12px);margin-bottom:10px}
+.window-title{font:600 10px system-ui;letter-spacing:.07em;color:#d5d9ef;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;text-transform:uppercase}
+.window-title span{font-size:10px;color:#6984ad;letter-spacing:5px}
+.hud-panel{background:linear-gradient(130deg,#050c18eb,#0d1121de);border:1px solid #9b9ec078;border-radius:10px;padding:13px 12px;margin:0 0 14px;box-shadow:0 10px 30px #0008,inset 0 0 18px #5975ba0a;backdrop-filter:blur(12px)}
+.hud-title{font:600 10px system-ui;letter-spacing:.045em;color:#d5d9ef;display:flex;justify-content:space-between;gap:8px;margin-bottom:13px;text-transform:uppercase}
+.hud-title small{color:#7c8aaf;font-size:9px;font-weight:400}
+.hud-gauges{display:flex;justify-content:space-between;gap:5px}.hud-gauge{text-align:center;min-width:0;flex:1}
+.hud-gauge label{display:block;font:9px system-ui;color:#a7aac2;margin-bottom:6px}
+.hud-ring{--value:0;--tint:#62cfe6;width:53px;height:53px;margin:auto;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--tint) calc(var(--value)*1%),#28314655 0);position:relative;box-shadow:0 0 12px #4072a41c}
+.hud-ring:before{content:'';position:absolute;inset:3px;border-radius:50%;background:#080e1b}
+.hud-ring b{font:12px system-ui;color:#e5ecff;z-index:1;font-variant-numeric:tabular-nums}
+.hud-detail{font:9px system-ui;color:#8c9bb7;margin-top:9px;line-height:1.6}
+.hud-terminal{font:11px/1.9 ui-monospace,Consolas,monospace;color:#a29bcb;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.hud-terminal strong{color:#7edeea;font-weight:500}.hud-rule{border:0;border-top:1px solid #66729b30;margin:10px 0}
+.hud-log{font:10px/1.9 Consolas,monospace;color:#91a0ba;margin:0}.hud-log time{color:#6f9ec0}.hud-log em{color:#79cdbb;font-style:normal}
+.holo-stage{height:620px;position:relative;pointer-events:none;isolation:isolate}
+.holo-state{position:absolute;bottom:5%;left:0;right:0;text-align:center;font:9px Consolas,monospace;letter-spacing:.18em;color:#b8e8ff;text-shadow:0 0 10px #50cfff}
+.holo-scan{position:absolute;top:6%;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,#9aebff8c,transparent);box-shadow:0 0 10px #75dcff80;animation:holo-scan 12s linear infinite;opacity:.3}
+.holo-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,#54aaff0a,transparent 65%);animation:holo-breathe 5s ease-in-out infinite}
+.state-thinking .holo-glow{background:radial-gradient(ellipse at 50% 40%,#a467ff35,transparent 65%);animation-duration:1.4s}
+.state-error .holo-state{color:#ffd2a4}.motion-off *{animation:none!important}
+.shortcut-caption{font:9px system-ui;color:#8fa2c4;margin:0 0 4px}
+.st-key-shortcut_window [data-testid="stHorizontalBlock"]{gap:5px}
+.st-key-shortcut_window button{font-size:10px!important;min-height:42px;padding:4px!important;background:#0b1227aa;border:1px solid #5d65a84d;border-radius:6px}
+.st-key-shortcut_window button:hover{border-color:#a58aeb;color:#dcceff}
+.st-key-shortcut_window button [data-has-shortcut]{display:flex;flex-direction:column;align-items:center;gap:4px}
+.st-key-shortcut_window button>div{justify-content:center}
+.st-key-shortcut_window button>div>div[aria-hidden="true"]{display:none}
+.st-key-shortcut_window .stMarkdownEllipsis{overflow:visible;white-space:nowrap}
+.st-key-shortcut_window .stMarkdownEllipsis p{font-size:9px}
+@keyframes holo-scan{to{top:78%}}@keyframes holo-breathe{50%{opacity:.3}}
+@media(prefers-reduced-motion:reduce){.holo-stage *{animation:none!important}}
+@media(max-width:900px){.block-container{padding:45px 3vw 20px}.hud-ring{width:44px;height:44px}.hud-ring b{font-size:10px}.hud-title{font-size:9px}}
+@media(max-width:640px){.stApp{background-position:center top;background-size:auto 100vh}.block-container{padding:45px 16px 20px}.holo-stage{height:320px}.hud-panel{background:#060c1bef}.st-key-chat_window,.st-key-code_window,.st-key-shortcut_window{background:#080d1cf2}.hud-ring{width:55px;height:55px}.hud-title{font-size:10px}}
+</style>'''
 
-HERO = """
-<div class="jarvis-hero">
-  <div class="jarvis-orb" aria-label="Animated JARVIS core"><div class="jarvis-core">J</div></div>
-  <div>
-    <div class="jarvis-brand">PERSONAL INTELLIGENCE SYSTEM · COMMAND CENTRE</div>
-    <div class="jarvis-title">J A R V I S</div>
-    <div class="jarvis-sub">Your private AI workspace. Think, speak, remember, and build — from one control centre.</div>
-    <div class="jarvis-tag">● LOCAL DASHBOARD</div>
-  </div>
-</div>
-"""
 
-
-def render_command_centre():
+def render_command_centre(reduced_motion=False):
     st.markdown(CSS, unsafe_allow_html=True)
-    st.markdown(HERO, unsafe_allow_html=True)
 
-AVATAR = """
-<div class="jarvis-stage" role="img" aria-label="Glowing holographic JARVIS face illustration">
-<div class="jarvis-ring"></div>
-<svg viewBox="0 0 300 380" class="jarvis-portrait" aria-hidden="true">
-<defs><linearGradient id="jarvisSkin" x2="1" y2="1"><stop stop-color="#3de9ff" stop-opacity=".65"/><stop offset=".55" stop-color="#38348c" stop-opacity=".9"/><stop offset="1" stop-color="#a266ee" stop-opacity=".55"/></linearGradient></defs>
-<path d="M55 300 Q30 315 17 365 L283 365 Q269 315 245 300 L210 280 L90 280Z" fill="url(#jarvisSkin)" stroke="#50dfff" stroke-width="2"/>
-<path d="M115 258 L110 301 Q150 329 190 301 L185 258" fill="url(#jarvisSkin)" stroke="#8cdfff"/>
-<path d="M75 113 Q75 33 150 31 Q225 33 225 113 L216 202 Q194 266 150 274 Q106 266 84 202Z" fill="url(#jarvisSkin)" stroke="#84eaff" stroke-width="2"/>
-<path d="M70 136 Q47 65 100 29 Q150 -7 200 29 Q253 65 230 136 Q214 78 192 77 Q151 101 107 77 Q86 93 70 136Z" fill="#141d58" stroke="#78c7ff" stroke-width="3"/>
-<path d="M95 153 Q115 140 137 153 M163 153 Q185 140 205 153" fill="none" stroke="#b9f5ff" stroke-width="4" stroke-linecap="round"/>
-<circle cx="117" cy="154" r="5" fill="#7cffff"/><circle cx="184" cy="154" r="5" fill="#7cffff"/>
-<path d="M150 160 L141 200 L157 200 M125 225 Q150 237 175 225" fill="none" stroke="#b9eaff" stroke-width="3"/>
-<path d="M87 294 L150 351 L213 294 M56 327 L150 373 L244 327" fill="none" stroke="#75f5ff" stroke-width="2"/>
-<circle cx="150" cy="333" r="12" fill="none" stroke="#a5ffff" stroke-width="3"/>
-</svg>
-<div class="jarvis-scan"></div><div class="jarvis-avatar-label">JARVIS / HOLOGRAPHIC VISUAL CORE</div>
-</div>
-"""
-CSS += """
-<style>
-.jarvis-stage{height:435px;position:relative;overflow:hidden;border:1px solid #347f9d;border-radius:22px;background:radial-gradient(ellipse at 50% 40%,#17446b,#111735 53%,#070e1e);box-shadow:inset 0 0 70px #1687b130}
-.jarvis-ring{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:300px;height:300px;border:1px solid #63eaff;border-radius:50%;box-shadow:0 0 35px #2ab7ff77,inset 0 0 30px #9457ee55;animation:jarvis-pulse 4s ease-in-out infinite}
-.jarvis-portrait{position:absolute;left:50%;top:4%;transform:translateX(-50%);height:90%;width:90%;filter:drop-shadow(0 0 13px #42ceff)}
-.jarvis-scan{position:absolute;left:5%;right:5%;top:8%;height:2px;background:#80efff88;box-shadow:0 0 12px #60eaff;animation:jarvis-sweep 6s linear infinite}
-.jarvis-avatar-label{position:absolute;bottom:12px;left:18px;color:#9ceeff;font-size:.7rem;letter-spacing:.2em;font-weight:700}
-.jarvis-panel{background:#0b2033;border:1px solid #285975;border-radius:14px;padding:16px;margin-bottom:14px}
-.jarvis-panel h4{color:#78eaff;margin:0 0 12px;font-size:.8rem;letter-spacing:.2em}
-.jarvis-panel p{color:#b4d9e8;margin:9px 0;font-size:.87rem}
-.jarvis-panel code{color:#9be7c8;font-size:.83rem}
-@keyframes jarvis-sweep{to{top:90%}}
-@media(prefers-reduced-motion:reduce){.jarvis-ring,.jarvis-scan{animation:none}}
-</style>
-"""
 
-def render_avatar():
-    st.markdown(AVATAR, unsafe_allow_html=True)
+def render_avatar(state="ready", reduced_motion=False):
+    states={"ready":"JARVIS / READY", "thinking":"JARVIS / PROCESSING YOUR REQUEST", "error":"JARVIS / REQUEST NEEDS ATTENTION"}
+    state=state if state in states else "ready"
+    classes=f"holo-stage state-{state}"+(" motion-off" if reduced_motion else "")
+    st.markdown(f'<div class="{classes}" role="img" aria-label="Photorealistic holographic JARVIS character"><div class="holo-glow"></div><div class="holo-scan"></div><div class="holo-state">{states[state]}</div></div>',unsafe_allow_html=True)
 
-def render_side_panels(provider, memory_count, message_count):
-    import html
-    provider = html.escape(str(provider).upper())
-    st.markdown(f"""<div class="jarvis-panel"><h4>SYSTEM MONITOR</h4>
-<p>AI ENGINE · {provider}</p><p>PRIVATE MEMORIES · {int(memory_count)}</p>
-<p>SESSION MESSAGES · {int(message_count)}</p><p>STATUS · DASHBOARD ACTIVE</p></div>
-<div class="jarvis-panel"><h4>TERMINAL / ACTIVITY</h4>
-<code>&gt; JARVIS UI ready<br>&gt; Chat and memory available<br>&gt; Voice upload requires consent<br>&gt; Computer control not enabled</code></div>""", unsafe_allow_html=True)
+
+def render_side_panels(provider,memory_count,message_count,activity=()):
+    entries=''.join(f'<p class="hud-log"><time>{html.escape(e["time"])}</time> {html.escape(e["action"])} · <em>{html.escape(e["outcome"])}</em></p>' for e in list(activity)[-5:])
+    entries=entries or '<p class="hud-log">No actions in this session yet.</p>'
+    st.markdown(f'<div class="hud-panel"><div class="hud-title">REAL-TIME LOGS <small>SESSION ONLY</small></div>{entries}</div>',unsafe_allow_html=True)
+
+
+def window_title(title):
+    st.markdown(f'<div class="window-title">{html.escape(title)}<span>− ◇ ×</span></div>',unsafe_allow_html=True)
