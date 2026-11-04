@@ -80,6 +80,12 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("speechSynthesis.speaking && !speechSynthesis.paused", markup)
         self.assertIn("current && !stopped && speechSynthesis.paused", markup)
 
+    def test_speech_startup_failure_does_not_leave_preview_active(self):
+        markup = self.render("Hello")
+        self.assertIn("try { speechSynthesis.speak(utterance); } catch (error)", markup)
+        self.assertIn("status.textContent = 'Speech could not start'", markup)
+        self.assertIn("speechSynthesis.addEventListener?.('voiceschanged'", markup)
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
