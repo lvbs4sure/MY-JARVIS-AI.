@@ -17,6 +17,10 @@ from local_ai import inspect_local_ai, hardware_readiness
 from local_runtime import start as start_isolated_ai, benchmark as benchmark_isolated_ai
 
 
+def reset_voice_capture():
+    st.session_state.voice_epoch = st.session_state.get("voice_epoch", 0) + 1
+
+
 def render_memory_controls():
     st.header("Private memory")
     memory_search = st.text_input("Search memories", max_chars=200, key="memory_search", placeholder="Find a saved note")
@@ -131,7 +135,16 @@ with right:
             with st.popover("Voice",icon=":material/mic:",width="stretch"):
                 st.markdown("### Voice message")
                 st.caption("Recording stays in this session until you explicitly allow the Gemini upload.")
-                audio=st.audio_input("Record your message")
+                muted=st.toggle("Mute microphone", key="microphone_muted", on_change=reset_voice_capture)
+                st.caption("Browser/Windows settings choose the microphone and output device. No wake-word or background listening is active.")
+                if muted:
+                    st.info("Microphone muted. New recording and transcription are blocked.")
+                    audio=None
+                else:
+                    audio=st.audio_input("Record your message", key=f"voice_capture_{st.session_state.get('voice_epoch', 0)}")
+                with st.expander("Test local spoken replies"):
+                    st.caption("Uses an installed local browser voice. Nothing is sent to a speech service.")
+                    speak_button("JARVIS voice controls are ready.")
                 spoken=None
                 if audio is not None:
                     raw=audio.getvalue()

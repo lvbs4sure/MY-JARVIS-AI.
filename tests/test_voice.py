@@ -8,7 +8,7 @@ class VoiceTests(unittest.TestCase):
         with patch("voice_output.st.iframe") as render:
             speak_button(text, label)
             render.assert_called_once()
-            self.assertEqual(render.call_args.kwargs["height"], 60)
+            self.assertEqual(render.call_args.kwargs["height"], 190)
             return render.call_args.args[0]
 
     def test_escapes_script_tags_in_reply(self):
@@ -45,6 +45,20 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("utterance.onstart", markup)
         self.assertIn("utterance.onend", markup)
         self.assertIn("aria-live", markup)
+
+    def test_only_local_voices_and_playback_controls(self):
+        markup = self.render("Hello")
+        self.assertIn("voice.localService", markup)
+        self.assertIn("utterance.voice = selectedVoice", markup)
+        self.assertIn("speechSynthesis.pause()", markup)
+        self.assertIn("speechSynthesis.resume()", markup)
+        self.assertIn("Speaking speed", markup)
+        self.assertNotIn("fetch(", markup)
+
+    def test_markdown_is_natural_speech(self):
+        from voice_output import speech_text
+        self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
+        self.assertNotIn("dangerous()", speech_text("```python\ndangerous()\n```"))
 
 
 if __name__ == "__main__":

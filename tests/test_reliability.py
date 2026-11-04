@@ -50,10 +50,32 @@ class ReliabilityTests(unittest.TestCase):
             app.chat_input[0].set_value("Nonpersonal fixture").run()
             self.assertFalse(app.exception)
             self.assertEqual(len(app.session_state["chat"]),2)
-            speak.assert_not_called()
+            self.assertNotIn(unittest.mock.call("Temporary failure"), speak.call_args_list)
             app.session_state["provider_override"]="ollama"
             app.button(key="retry_reply").click().run()
             self.assertFalse(app.exception)
             self.assertEqual([m["content"] for m in app.session_state["chat"]],["Nonpersonal fixture","Recovered"])
             self.assertEqual(reply.call_args.kwargs["provider"],"gemini")
             self.assertEqual(reply.call_args.args[0],[{"role":"user","content":"Nonpersonal fixture"}])
+
+    def test_muted_backend_cannot_upload(self):
+        from jarvis_ai import transcribe_audio
+        with patch("jarvis_ai._gemini_content") as cloud:
+            text, error = transcribe_audio(b"sample", muted=True)
+            self.assertIsNone(text)
+            self.assertIn("muted", error)
+            cloud.assert_not_called()
+
+    def test_muted_dashboard_never_creates_recorder_or_uploads(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(memory_store,"DB_PATH",Path(folder)/"test.db"), patch("streamlit.audio_input",return_value=None) as recorder, patch("jarvis_ai.transcribe_audio") as upload:
+            app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/"app.py"),default_timeout=15)
+            app.session_state["microphone_muted"]=True
+            app.run()
+            self.assertFalse(app.exception)
+            recorder.assert_not_called()
+            upload.assert_not_called()
+            app.toggle(key="microphone_muted").set_value(False).run()
+            self.assertFalse(app.exception)
+            recorder.assert_called_once()
+            self.assertEqual(recorder.call_args.kwargs["key"],"voice_capture_1")
+            upload.assert_not_called()

@@ -190,3 +190,13 @@ license conflicts, especially for a future commercial or hosted AI hub.
 - Local inference and fallback now enforce the 2 GiB RAM gate in the provider adapter as well as the UI.
 - Windows verification: 75 automated tests passed; production dashboard reloaded at port 8501 with Gemini still selected. Simulated 504/429/offline, retry/no-duplicate and low-RAM gates passed.
 - Live Gemini and new audio upload checks pending explicit cloud-test permission. Provider stability gate remains partially verified, not complete.
+
+### Voice foundation increment — 2026-11-04
+- Implemented microphone mute that removes the recorder and blocks submission, resets capture identity on mute/unmute, and retains duplicate-upload guards. Added a defensive muted transcription argument.
+- Spoken replies use explicitly selected installed local voices only, with speed, pause/resume, stop, and Markdown-to-speech cleanup. No default remote browser voice is used. Added a nonpersonal local playback test in Voice.
+- Transcription now shares bounded, credential-safe Gemini error handling.
+- Windows browser verified: mute removes Record; Microsoft David/Mark/Zira local voices discovered; playback reached Finished; interruption showed Paused, Resume showed Speaking, Stop showed Stopped. This is browser event verification, not physical audibility verification.
+- Final Windows suite: 80 tests passed after integrating remote memory lookup and panel changes through 51f54be. Existing holographic interface preserved; desktop layout checked at 1280 x 800 and temporary viewport reset.
+- Live approved tests: direct nonpersonal text failed HTTP 504 in 32.241 s; generated audio failed timeout in 32.24 s; dashboard text succeeded in 1.710 s and 10.770 s with genuine Gemini responses. No further cloud test quota was used.
+- Remaining: physical mic/speaker loop, unplug/reconnect, device selection within JARVIS, streaming/cancellation/barge-in/wake word and echo prevention. No claim of MARK LIV voice parity.
+- Blocker: intermittent Gemini service/timeout failures, especially audio. Do not proceed to heavier local inference with less than 2 GiB free RAM or install a new speech engine without approval.

@@ -157,8 +157,10 @@ def generate_reply_result(*args, **kwargs):
     return result if isinstance(result, ReplyResult) else legacy_result(result, kwargs.get("provider") or os.getenv("JARVIS_PROVIDER", "ollama"))
 
 
-def transcribe_audio(audio_bytes: bytes):
+def transcribe_audio(audio_bytes: bytes, *, muted=False):
     """Voice transcription is opt-in and requires Gemini; never silently upload audio."""
+    if muted:
+        return None, "Microphone muted. Transcription is blocked."
     if os.getenv("JARVIS_VOICE_PROVIDER", "off").lower() != "gemini":
         return None, "Voice transcription is disabled. Set JARVIS_VOICE_PROVIDER=gemini to opt in."
     key = os.getenv("GEMINI_API_KEY", "").strip()
@@ -169,16 +171,13 @@ def transcribe_audio(audio_bytes: bytes):
     if len(audio_bytes) > 8_000_000:
         return None, "Recording too large; please record a shorter message."
     try:
-        from google import genai
         from google.genai import types
-        with genai.Client(api_key=key, http_options={"timeout": 15000, "retry_options": {"attempts": 2, "initial_delay": 1, "max_delay": 1}}) as client:
-            response = client.models.generate_content(
-                model=os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest"),
-                contents=[
-                    "Transcribe this speech. Return only spoken words.",
-                    types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
-                ],
-            )
+        response, failure = _gemini_content(key, [
+            "Transcribe this speech. Return only spoken words.",
+            types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
+        ], os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest"))
+        if failure:
+            return None, "Voice transcription: " + failure[0]
         text = (response.text or "").strip()
         return (text, None) if text else (None, "No speech recognized. Please record a clearer message.")
     except Exception as exc:
