@@ -80,7 +80,7 @@ class SpeechLifecycleTests(unittest.TestCase):
     def test_stop_prevents_delayed_autoplay_when_voices_arrive(self):
         markup = speech_markup("Hello", auto_play=True)
         autoplay = markup.split("const tryAutoStart = () => {", 1)[1].split("window.addEventListener('load'", 1)[0]
-        self.assertIn("if (attemptedAutoStart || stopped || current) return;", autoplay)
+        self.assertIn("if (attemptedAutoStart || speechRequested || stopped || current) return;", autoplay)
         self.assertIn("speechSynthesis.addEventListener?.('voiceschanged', tryAutoStart)", markup)
         stop = markup.split("document.getElementById('stop').onclick = () => {", 1)[1]
         self.assertIn("stopped = true;", stop)
@@ -88,9 +88,19 @@ class SpeechLifecycleTests(unittest.TestCase):
     def test_delayed_voice_discovery_does_not_restart_manual_speech(self):
         markup = speech_markup("Hello", auto_play=True)
         autoplay = markup.split("const tryAutoStart = () => {", 1)[1].split("window.addEventListener('load'", 1)[0]
-        self.assertIn("if (attemptedAutoStart || stopped || current) return;", autoplay)
+        self.assertIn("if (attemptedAutoStart || speechRequested || stopped || current) return;", autoplay)
         self.assertIn("current = utterance;", markup)
         self.assertIn("speechSynthesis.addEventListener?.('voiceschanged', tryAutoStart)", markup)
+
+    def test_manual_speech_completion_cannot_trigger_delayed_autoplay(self):
+        markup = speech_markup("Hello", auto_play=True)
+        speak = markup.split("document.getElementById('speak').onclick = () => {", 1)[1].split("if (!('speechSynthesis' in window))", 1)[0]
+        autoplay = markup.split("const tryAutoStart = () => {", 1)[1].split("window.addEventListener('load'", 1)[0]
+        self.assertIn("speechRequested = true;", speak)
+        self.assertIn("if (attemptedAutoStart || speechRequested || stopped || current) return;", autoplay)
+        # current is cleared on completion; the persistent request flag prevents
+        # voiceschanged from unexpectedly starting another utterance.
+        self.assertIn("current = null; stopPreview();", markup)
 
     def test_pagehide_resets_speech_state_for_avatar_listeners(self):
         markup = speech_markup("Hello")
