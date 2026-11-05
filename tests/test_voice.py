@@ -15,7 +15,7 @@ class VoiceTests(unittest.TestCase):
     def test_escapes_script_tags_in_reply(self):
         markup = self.render("</script><script>alert('x')</script>")
         self.assertNotIn("</script><script>alert", markup)
-        self.assertIn("\\u003c/script\\u003e", markup)
+        self.assertNotIn("alert(", markup)
         self.assertIn("speechSynthesis", markup)
 
     def test_escapes_html_in_button_label(self):
