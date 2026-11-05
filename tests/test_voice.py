@@ -98,6 +98,13 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("Number.isFinite(requestedRate)", markup)
         self.assertIn("Math.max(0.5, Math.min(2, requestedRate))", markup)
 
+    def test_manual_speech_disables_late_autostart(self):
+        from voice_output import speech_markup
+        markup = speech_markup("Hello", auto_play=True)
+        self.assertIn("let speechRequested = false;", markup)
+        self.assertIn("document.getElementById('speak').onclick = () => {\\n  speechRequested = true;", markup)
+        self.assertIn("attemptedAutoStart || speechRequested || stopped || current", markup)
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
