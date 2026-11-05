@@ -157,7 +157,11 @@ with centre:
         if avatar_style=="Animated wireframe face":
             latest_reply=next((m["content"] for m in reversed(st.session_state.chat) if m["role"]=="assistant" and m.get("ok",True)), "")
             last_is_reply=bool(st.session_state.chat and st.session_state.chat[-1].get("role")=="assistant" and st.session_state.chat[-1].get("ok",True))
-            render_moving_face(latest_reply,st.session_state.assistant_state,reduced_motion,auto_play=bool(st.session_state.get("auto_speak_replies",False) and last_is_reply))
+            reply_token=(len(st.session_state.chat),latest_reply)
+            auto_face=bool(st.session_state.get("auto_speak_replies",False) and last_is_reply and st.session_state.get("last_face_spoken")!=reply_token)
+            render_moving_face(latest_reply,st.session_state.assistant_state,reduced_motion,auto_play=auto_face)
+            if auto_face:
+                st.session_state.last_face_spoken=reply_token
 with right:
     with st.container(key="chat_window"):
         window_title("AI chat interface")
