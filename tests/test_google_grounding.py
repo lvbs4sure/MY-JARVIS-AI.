@@ -6,6 +6,12 @@ from reply_status import ReplyResult
 
 
 class GoogleGroundingTests(unittest.TestCase):
+    def test_multilingual_chat_instruction(self):
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True), patch("jarvis_ai._gemini_content") as call:
+            call.return_value = (type("Response", (), {"text": "Bonjour"})(), None)
+            generate_reply([{"role": "user", "content": "Bonjour"}], [], provider="gemini")
+            self.assertIn("Reply in the language used by the user", call.call_args.args[1])
+
     def test_grounding_is_off_by_default(self):
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True), patch("jarvis_ai._gemini_content") as call:
             call.return_value = (type("Response", (), {"text": "ok"})(), None)
