@@ -76,7 +76,7 @@ class AppTests(unittest.TestCase):
                 self.assertFalse(app.exception)
                 self.assertEqual(memory_store.list_memories(), [])
 
-    def test_chat_reply_has_speech_button_immediately(self):
+    def test_chat_reply_avoids_duplicate_speech_controls(self):
         with tempfile.TemporaryDirectory() as folder:
             with patch.object(memory_store, "DB_PATH", Path(folder) / "memory.db"), \
                  patch("jarvis_ai.generate_reply", return_value="Hello from JARVIS"), \
@@ -89,7 +89,7 @@ class AppTests(unittest.TestCase):
                 self.assertEqual(len(app.exception), 0)
                 self.assertEqual(app.session_state["chat"][-1]["content"], "Hello from JARVIS")
                 self.assertEqual(app.metric[2].value, "2")
-                speak.assert_any_call("Hello from JARVIS")
+                speak.assert_not_called()
 
 
     def test_voice_message_sends_directly_after_consent(self):
