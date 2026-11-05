@@ -172,7 +172,10 @@ def generate_reply(messages, memories, name="JARVIS", personality="Helpful and c
                 return finish("[Local Ollama fallback: Gemini is temporarily unavailable.]\n\n" + answer, actual_provider="ollama")
             return finish(text + " Local fallback failed: " + local_error, False, kind, retryable, status)
         return finish(text, False, kind, retryable, status)
-    answer = response.text if isinstance(response.text, str) else ""
+    # Read SDK text only once: repeated property access may be expensive or
+    # yield different values while an interrupted response is being decoded.
+    response_text = response.text
+    answer = response_text if isinstance(response_text, str) else ""
     # A stop may arrive while the SDK exposes the response text.
     if cancel_event is not None and cancel_event.is_set():
         return finish("Request interrupted.", False, "cancelled")
