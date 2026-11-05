@@ -173,6 +173,28 @@ class AITests(unittest.TestCase):
         self.assertEqual(result.kind, "cancelled")
         self.assertNotIn("stale private Gemini answer", result.text)
 
+    def test_gemini_reply_reads_response_text_only_once(self):
+        from jarvis_ai import generate_reply_result
+
+        class OneShotText:
+            def __init__(self):
+                self.reads = 0
+
+            @property
+            def text(self):
+                self.reads += 1
+                if self.reads > 1:
+                    raise AssertionError("Gemini response text accessed twice")
+                return "One-shot answer"
+
+        response = OneShotText()
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}):
+            with patch("jarvis_ai._gemini_content", return_value=(response, None)):
+                result = generate_reply_result([], [], provider="gemini")
+        self.assertTrue(result.ok)
+        self.assertEqual(result.text, "One-shot answer")
+        self.assertEqual(response.reads, 1)
+
     def test_cancelled_gemini_client_setup_error_reports_interruption(self):
         from threading import Event
         from jarvis_ai import _gemini_content
