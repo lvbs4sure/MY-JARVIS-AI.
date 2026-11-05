@@ -7,10 +7,13 @@ import streamlit.components.v1 as components
 
 def speech_text(text):
     text = re.sub(r"```.*?```", " Code block omitted from speech. ", str(text), flags=re.S)
+    text = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", text)
     text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
     text = re.sub(r"(?m)^\s{0,3}#{1,6}\s+", "", text)
     text = re.sub(r"[*_`]+", "", text)
-    return text[:12000]
+    # Decode entities only after removing tags so encoded markup remains spoken text.
+    text = re.sub(r"<[^>\n]+>", " ", text)
+    return html.unescape(text)[:12000]
 
 
 def speech_markup(text: str, label: str = "🔊 Speak reply", *, auto_play: bool = False):
