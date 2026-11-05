@@ -98,6 +98,11 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("Number.isFinite(requestedRate)", markup)
         self.assertIn("Math.max(0.5, Math.min(2, requestedRate))", markup)
 
+    def test_invalid_browser_boundary_is_discarded_before_dispatch(self):
+        markup = self.render("Hello")
+        self.assertIn("event.charIndex >= message.length) return; speechPulse(); window.dispatchEvent", markup)
+        self.assertIn("if (current !== utterance || stopped || !active || speechSynthesis.paused) return;", markup)
+
     def test_manual_speech_disables_late_autostart(self):
         from voice_output import speech_markup
         markup = speech_markup("Hello", auto_play=True)
