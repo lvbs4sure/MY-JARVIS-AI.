@@ -118,6 +118,12 @@ class VoiceTests(unittest.TestCase):
         )
         self.assertEqual(speech_text("&lt;safe&gt;"), "<safe>")
 
+    def test_comparison_symbols_are_spoken_not_mistaken_for_html(self):
+        from voice_output import speech_text
+        self.assertEqual(speech_text("2 < 3 and 5 > 4"), "2 < 3 and 5 > 4")
+        self.assertEqual(speech_text("A < B > C"), "A < B > C")
+        self.assertEqual(speech_text("<b>Hi</b> <script>alert(1)</script>"), " Hi   alert(1) ")
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
