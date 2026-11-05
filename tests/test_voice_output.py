@@ -61,6 +61,21 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("Waiting for an installed local voice", markup)
         self.assertIn("voice.localService", markup)
 
+    def test_stop_prevents_delayed_autoplay_when_voices_arrive(self):
+        markup = speech_markup("Hello", auto_play=True)
+        autoplay = markup.split("const tryAutoStart = () => {", 1)[1].split("window.addEventListener('load'", 1)[0]
+        self.assertIn("if (attemptedAutoStart || stopped) return;", autoplay)
+        self.assertIn("speechSynthesis.addEventListener?.('voiceschanged', tryAutoStart)", markup)
+        stop = markup.split("document.getElementById('stop').onclick = () => {", 1)[1]
+        self.assertIn("stopped = true;", stop)
+
+    def test_pagehide_resets_speech_state_for_avatar_listeners(self):
+        markup = speech_markup("Hello")
+        handler = markup.split("window.addEventListener('pagehide',", 1)[1].split("document.getElementById('stop').onclick", 1)[0]
+        self.assertIn("speechSynthesis.cancel()", handler)
+        self.assertIn("stopPreview()", handler)
+        self.assertIn("emitSpeechState('ready')", handler)
+
     def test_local_voice_prefers_browser_language(self):
         markup = speech_markup("Bonjour")
         self.assertIn("navigator.language", markup)
