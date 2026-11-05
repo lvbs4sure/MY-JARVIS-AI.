@@ -102,7 +102,7 @@ class VoiceTests(unittest.TestCase):
         from voice_output import speech_markup
         markup = speech_markup("Hello", auto_play=True)
         self.assertIn("let speechRequested = false;", markup)
-        self.assertIn("document.getElementById('speak').onclick = () => {\\n  speechRequested = true;", markup)
+        self.assertIn("document.getElementById('speak').onclick = () => {\n  speechRequested = true;", markup)
         self.assertIn("attemptedAutoStart || speechRequested || stopped || current", markup)
 
     def test_markdown_is_natural_speech(self):
