@@ -122,7 +122,16 @@ class VoiceTests(unittest.TestCase):
         from voice_output import speech_text
         self.assertEqual(speech_text("2 < 3 and 5 > 4"), "2 < 3 and 5 > 4")
         self.assertEqual(speech_text("A < B > C"), "A < B > C")
-        self.assertEqual(speech_text("<b>Hi</b> <script>alert(1)</script>"), " Hi   alert(1) ")
+        self.assertEqual(speech_text("<b>Hi</b> <script>alert(1)</script>"), " Hi   ")
+
+    def test_hidden_html_is_not_spoken(self):
+        from voice_output import speech_text
+        spoken = speech_text("Hello <script>steal()</script><style>body{display:none}</style><!-- secret --> world")
+        self.assertNotIn("steal()", spoken)
+        self.assertNotIn("display:none", spoken)
+        self.assertNotIn("secret", spoken)
+        self.assertIn("Hello", spoken)
+        self.assertIn("world", spoken)
 
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
