@@ -11,6 +11,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 from memory_store import add_memory, list_memories, search_memories, count_memories, update_memory, delete_memory
 from jarvis_ai import generate_reply_result, transcribe_audio
 from voice_output import speak_button
+from animated_avatar import render_moving_face
 from file_preview import preview_upload
 from camera_preview import render_camera_preview
 import chat_history
@@ -120,7 +121,7 @@ def request_controls():
 
 
 st.set_page_config(page_title="JARVIS", page_icon="◈", layout="wide", initial_sidebar_state="collapsed")
-avatar_style="Holographic scene"
+avatar_style=st.session_state.get("avatar_style", "Holographic scene")
 render_command_centre()
 st.session_state.setdefault("chat", [])
 st.session_state.setdefault("voice_digest", None)
@@ -146,13 +147,18 @@ with st.sidebar:
     st.caption("The tool dock opens memory, voice, history, files, research, camera, system and settings.")
     st.caption("This installation is private and single-user. Gemini chat sends conversation and saved context to Google; telemetry stays local.")
 
-left, centre, right=st.columns([1, 1.15, 1], gap="large")
+left, centre, right=st.columns([0.8, 1.7, 1], gap="large")
 with left:
     render_system_monitor(live_monitoring)
 with centre:
     avatar_mount=st.empty()
     with avatar_mount.container():
-        render_avatar(st.session_state.assistant_state,reduced_motion)
+        if avatar_style=="Animated wireframe face":
+            latest_reply=next((m["content"] for m in reversed(st.session_state.chat) if m["role"]=="assistant" and m.get("ok",True)), "")
+            last_is_reply=bool(st.session_state.chat and st.session_state.chat[-1].get("role")=="assistant" and st.session_state.chat[-1].get("ok",True))
+            render_moving_face(latest_reply,st.session_state.assistant_state,reduced_motion,auto_play=bool(st.session_state.get("auto_speak_replies",False) and last_is_reply))
+        else:
+            render_avatar(st.session_state.assistant_state,reduced_motion)
 with right:
     with st.container(key="chat_window"):
         window_title("AI chat interface")
@@ -311,6 +317,7 @@ with right:
         with settings_tile:
             with st.popover("Settings",icon=":material/settings:",width="stretch"):
                 st.markdown("### Personal settings")
+                st.selectbox("Hologram display",["Holographic scene","Animated wireframe face"],key="avatar_style",help="Animated preview adds approximate speech-linked mouth motion. Original holographic scene remains available.")
                 assistant_name=st.text_input("Assistant name",os.getenv("JARVIS_NAME","JARVIS"),key="assistant_name",max_chars=50).strip() or "JARVIS"
                 personality=st.selectbox("Personality",["Helpful and concise","Friendly and encouraging","Professional and precise","Curious and creative"],key="personality")
                 st.caption("Your original holographic JARVIS appearance is preserved.")
