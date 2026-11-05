@@ -1,6 +1,6 @@
 """Original lightweight wireframe face, driven by local speech events."""
 import json
-import streamlit as st
+import streamlit.components.v1 as components
 from voice_output import speech_markup
 
 FACE_HTML = """<canvas id="face" width="360" height="410" role="img" aria-label="Original animated JARVIS wireframe face"></canvas>
@@ -68,13 +68,13 @@ window.addEventListener('pagehide',()=>cancelAnimationFrame(animation));
 </script>"""
 
 
-def moving_face_markup(text, state="ready", reduced_motion=False):
+def moving_face_markup(text, state="ready", reduced_motion=False, auto_play=False):
     state={"thinking":"processing", "transcribing":"transcribing", "error":"needs attention"}.get(state,"ready")
-    markup=speech_markup(text or "Hello. I am JARVIS. My voice and movement controls are ready.","Speak latest reply" if text else "Test face and voice")
+    markup=speech_markup(text or "Hello. I am JARVIS. My voice and movement controls are ready.","Speak latest reply" if text else "Test face and voice",auto_play=auto_play)
     markup=markup.replace('<button id="speak"',FACE_HTML+'<button id="speak"',1)
     script=FACE_JS.replace('REDUCED_MOTION',json.dumps(bool(reduced_motion))).replace('INITIAL_STATE',json.dumps(state))
     return markup.replace('</body>',script+'</body>')
 
 
-def render_moving_face(text="", state="ready", reduced_motion=False):
-    st.iframe(moving_face_markup(text,state,reduced_motion),height=580,alt="Animated JARVIS face with local speech and interrupt controls")
+def render_moving_face(text="", state="ready", reduced_motion=False, auto_play=False):
+    components.html(moving_face_markup(text,state,reduced_motion,auto_play=auto_play),height=580,scrolling=True)
