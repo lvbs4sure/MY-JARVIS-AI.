@@ -46,6 +46,14 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("new CustomEvent('jarvis-boundary'", handler)
         self.assertIn("not exact lip-sync", markup)
 
+    def test_auto_speech_requires_explicit_opt_in(self):
+        self.assertIn("const autoStart = false;", speech_markup("Hello"))
+        enabled = speech_markup("Hello", auto_play=True)
+        self.assertIn("const autoStart = true;", enabled)
+        self.assertIn("if (autoStart)", enabled)
+        self.assertIn("if (localVoices.length)", enabled)
+        self.assertIn("Select an installed voice", enabled)
+
     def test_local_voice_prefers_browser_language(self):
         markup = speech_markup("Bonjour")
         self.assertIn("navigator.language", markup)
