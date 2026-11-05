@@ -106,11 +106,16 @@ document.getElementById('speak').onclick = () => {{
   try {{ speechSynthesis.speak(utterance); }} catch (error) {{ if (current === utterance) {{ current = null; stopPreview(); status.textContent = 'Speech could not start'; emitSpeechState('ready'); }} }}
 }};
 if (autoStart) {{
-  window.addEventListener('load', () => {{
+  let attemptedAutoStart = false;
+  const tryAutoStart = () => {{
+    if (attemptedAutoStart) return;
     refreshVoices();
-    if (localVoices.length) document.getElementById('speak').click();
-    else status.textContent = 'Select an installed voice and press Speak.';
-  }}, {{once:true}});
+    if (!localVoices.length) {{ status.textContent = 'Waiting for an installed local voice. You can press Speak manually.'; return; }}
+    attemptedAutoStart = true;
+    document.getElementById('speak').click();
+  }};
+  window.addEventListener('load', tryAutoStart, {{once:true}});
+  speechSynthesis.addEventListener?.('voiceschanged', tryAutoStart);
 }}
 document.getElementById('pause').onclick = () => {{
   if ('speechSynthesis' in window && current && speechSynthesis.speaking && !speechSynthesis.paused) {{ speechSynthesis.pause(); stopPreview(); status.textContent = 'Paused'; emitSpeechState('paused'); }}
