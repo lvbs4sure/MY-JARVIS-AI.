@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class TalkingAvatarIntegrationTests(unittest.TestCase):
     def test_default_remains_original_scene(self):
         app = (ROOT / "app.py").read_text(encoding="utf-8")
-        self.assertIn('st.session_state.get("avatar_style", "Holographic scene")', app)
+        self.assertIn('st.session_state.get("avatar_style", "Talking humanoid preview")', app)
         self.assertIn('"Talking humanoid preview"', app)
         self.assertIn('if avatar_style!="Talking humanoid preview":', app)
         self.assertIn("render_talking_avatar_preview(latest_reply)", app)
