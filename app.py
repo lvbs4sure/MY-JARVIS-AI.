@@ -122,7 +122,7 @@ def request_controls():
 
 
 st.set_page_config(page_title="JARVIS", page_icon="◈", layout="wide", initial_sidebar_state="collapsed")
-avatar_style=st.session_state.get("avatar_style", "Holographic scene")
+avatar_style=st.session_state.get("avatar_style", "Talking humanoid preview")
 render_command_centre()
 st.session_state.setdefault("chat", [])
 st.session_state.setdefault("voice_digest", None)
@@ -169,8 +169,8 @@ with centre:
                 st.session_state.last_face_spoken=reply_token
 with right:
     with st.container(key="chat_window"):
-        window_title("AI chat interface")
-        render_session_strip(provider,st.session_state.get("microphone_muted",False),st.session_state.get("save_chat_history",False),busy)
+        st.markdown("### Talk with JARVIS")
+        # Provider and diagnostics remain in the System panel, not the conversation.
         conversation=st.container(height=230,border=False)
         with conversation:
             if not st.session_state.chat:
@@ -180,11 +180,6 @@ with right:
                     st.write(message["content"])
                     if message.get("cancelled"):
                         st.caption("Interrupted; omitted from future AI context.")
-                    if message["role"]=="assistant" and message.get("ok", True) and avatar_style!="Animated wireframe face":
-                        if st.session_state.get("auto_speak_replies", False) and message is st.session_state.chat[-1]:
-                            speak_button(message["content"], auto_play=True)
-                        else:
-                            speak_button(message["content"])
         if st.session_state.get("last_request"):
             st.caption(st.session_state.last_request)
         if busy:
@@ -194,16 +189,6 @@ with right:
             st.caption("The last request failed. Retry sends the same conversation to the same provider.")
             retry = st.button("Retry last message", key="retry_reply", disabled=busy)
         typed=st.chat_input(f"Ask {assistant_name} anything…",key="chat_prompt", disabled=busy)
-    with st.container(key="code_window"):
-        with st.expander("Code snippet",icon=":material/code:"):
-            last_reply=next((item["content"] for item in reversed(st.session_state.chat) if item["role"]=="assistant"), "")
-            code=re.search(r"```(?:[\w+-]+)?\n(.*?)```",last_reply,re.S)
-            if code:
-                st.code(code.group(1)[:4000],language="text",height=140)
-                st.caption("From the latest reply. Display only; never executed.")
-            else:
-                st.code("from system_monitor import snapshot\n\n# Read-only local diagnostics\nstatus = snapshot()\nprint(status)",language="python")
-                st.caption("Example only. Ask JARVIS for code to replace this snippet.")
     with st.container(key="shortcut_window"):
         window_title("Shortcuts")
         memory_tile,voice_tile,system_tile,settings_tile=st.columns(4,gap="small")
@@ -325,7 +310,7 @@ with right:
         with settings_tile:
             with st.popover("Settings",icon=":material/settings:",width="stretch"):
                 st.markdown("### Personal settings")
-                st.selectbox("Hologram display",["Holographic scene","Animated wireframe face","Talking humanoid preview"],key="avatar_style",help="Talking humanoid preview has its own opt-in test voice and is not yet linked to chat replies. Original scene remains the default.")
+                st.selectbox("Hologram display",["Holographic scene","Animated wireframe face","Talking humanoid preview"],key="avatar_style",help="Talking humanoid preview speaks the latest reply when you press its speech button. Original scene remains available.")
                 assistant_name=st.text_input("Assistant name",os.getenv("JARVIS_NAME","JARVIS"),key="assistant_name",max_chars=50).strip() or "JARVIS"
                 personality=st.selectbox("Personality",["Helpful and concise","Friendly and encouraging","Professional and precise","Curious and creative"],key="personality")
                 st.caption("Your original holographic JARVIS appearance is preserved.")
