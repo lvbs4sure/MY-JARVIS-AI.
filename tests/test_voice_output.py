@@ -61,6 +61,15 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("Waiting for an installed local voice", markup)
         self.assertIn("voice.localService", markup)
 
+    def test_autoplay_does_not_register_on_unsupported_browsers(self):
+        markup = speech_markup("Hello", auto_play=True)
+        self.assertIn("if (autoStart && 'speechSynthesis' in window) {", markup)
+        self.assertIn("if (!('speechSynthesis' in window))", markup)
+        # A browser without the speechSynthesis global must not attempt
+        # to register its voiceschanged callback during page initialization.
+        autoplay = markup.split("if (autoStart && 'speechSynthesis' in window) {", 1)[1]
+        self.assertIn("speechSynthesis.addEventListener?.('voiceschanged', tryAutoStart)", autoplay)
+
     def test_stop_prevents_delayed_autoplay_when_voices_arrive(self):
         markup = speech_markup("Hello", auto_play=True)
         autoplay = markup.split("const tryAutoStart = () => {", 1)[1].split("window.addEventListener('load'", 1)[0]
