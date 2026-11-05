@@ -46,6 +46,12 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("new CustomEvent('jarvis-boundary'", handler)
         self.assertIn("not exact lip-sync", markup)
 
+    def test_local_voice_prefers_browser_language(self):
+        markup = speech_markup("Bonjour")
+        self.assertIn("navigator.language", markup)
+        self.assertIn("voice.lang.toLowerCase().split", markup)
+        self.assertIn("voice.localService", markup)
+
     def test_speech_text_cannot_inject_script_markup(self):
         markup = speech_markup("</script><script>alert(1)</script>")
         self.assertNotIn("</script><script>alert(1)", markup)
