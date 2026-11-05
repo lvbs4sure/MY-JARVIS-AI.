@@ -97,7 +97,7 @@ document.getElementById('speak').onclick = () => {{
   const requestedRate = Number(document.getElementById('rate').value);
   utterance.rate = Number.isFinite(requestedRate) ? Math.max(0.5, Math.min(2, requestedRate)) : 1;
   utterance.onstart = () => {{ if (current !== utterance || stopped) return; active = true; status.textContent = 'Speaking'; emitSpeechState('speaking'); }};
-  utterance.onboundary = (event) => {{ if (current !== utterance || stopped || speechSynthesis.paused) return; speechPulse(); window.dispatchEvent(new CustomEvent('jarvis-boundary', {{detail: {{charIndex: Number.isFinite(event.charIndex) ? event.charIndex : null, elapsedTime: Number.isFinite(event.elapsedTime) ? event.elapsedTime : null}}}})); }};
+  utterance.onboundary = (event) => {{ if (current !== utterance || stopped || speechSynthesis.paused) return; speechPulse(); window.dispatchEvent(new CustomEvent('jarvis-boundary', {{detail: {{charIndex: Number.isFinite(event.charIndex) ? event.charIndex : null, charLength: Number.isFinite(event.charLength) ? event.charLength : null, boundaryName: typeof event.name === 'string' ? event.name : null, elapsedTime: Number.isFinite(event.elapsedTime) ? event.elapsedTime : null}}}})); }};
   utterance.onpause = () => {{ if (current !== utterance || stopped) return; stopPreview(); status.textContent = 'Paused'; emitSpeechState('paused'); }};
   utterance.onresume = () => {{ if (current !== utterance || stopped) return; active = true; status.textContent = 'Speaking'; emitSpeechState('speaking'); }};
   utterance.onend = () => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Finished'; emitSpeechState('ready'); }};
