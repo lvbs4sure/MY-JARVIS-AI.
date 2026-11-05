@@ -167,7 +167,10 @@ with right:
                     if message.get("cancelled"):
                         st.caption("Interrupted; omitted from future AI context.")
                     if message["role"]=="assistant" and message.get("ok", True) and avatar_style!="Animated wireframe face":
-                        speak_button(message["content"], auto_play=bool(st.session_state.get("auto_speak_replies", False) and message is st.session_state.chat[-1]))
+                        if st.session_state.get("auto_speak_replies", False) and message is st.session_state.chat[-1]:
+                            speak_button(message["content"], auto_play=True)
+                        else:
+                            speak_button(message["content"])
         if st.session_state.get("last_request"):
             st.caption(st.session_state.last_request)
         if busy:
