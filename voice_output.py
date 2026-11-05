@@ -44,7 +44,7 @@ function refreshVoices() {{
     voiceMenu.append(option);
   }});
   if (localVoices.some(voice => voice.voiceURI === previous)) voiceMenu.value = previous;
-  else {{ const english = localVoices.find(voice => voice.lang.startsWith('en')); if (english) voiceMenu.value = english.voiceURI; }}
+  else {{ const lang = (navigator.language || 'en').toLowerCase().split('-')[0]; const preferred = localVoices.find(voice => voice.lang.toLowerCase().split('-')[0] === lang); if (preferred) voiceMenu.value = preferred.voiceURI; }}
   if (!localVoices.length) status.textContent = 'No local voice available. No cloud voice will be used.';
   else if (status.textContent.startsWith('No local voice')) status.textContent = 'Ready';
 }}
