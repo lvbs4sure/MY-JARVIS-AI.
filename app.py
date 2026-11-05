@@ -157,7 +157,8 @@ with centre:
         if avatar_style!="Talking humanoid preview":
             render_avatar(st.session_state.assistant_state,reduced_motion)
         else:
-            render_talking_avatar_preview()
+            latest_reply=next((m["content"] for m in reversed(st.session_state.chat) if m["role"]=="assistant" and m.get("ok",True) and not m.get("cancelled")), "")
+            render_talking_avatar_preview(latest_reply)
         if avatar_style=="Animated wireframe face":
             latest_reply=next((m["content"] for m in reversed(st.session_state.chat) if m["role"]=="assistant" and m.get("ok",True)), "")
             last_is_reply=bool(st.session_state.chat and st.session_state.chat[-1].get("role")=="assistant" and st.session_state.chat[-1].get("ok",True))
