@@ -55,6 +55,12 @@ let previewTimer = null;
 const mouth = document.getElementById('mouth');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let active = false;
+let speechState = 'ready';
+function emitSpeechState(next) {{
+  if (speechState === next) return;
+  speechState = next;
+  window.dispatchEvent(new CustomEvent('jarvis-speech',{{detail:next}}));
+}}
 function setMouth(open) {{
   mouth.style.height = (!active || reducedMotion.matches || !open) ? '3px' : '13px';
   mouth.style.bottom = (!active || reducedMotion.matches || !open) ? '19px' : '14px';
