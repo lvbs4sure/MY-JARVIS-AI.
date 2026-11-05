@@ -105,6 +105,14 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("document.getElementById('speak').onclick = () => {\n  speechRequested = true;", markup)
         self.assertIn("attemptedAutoStart || speechRequested || stopped || current", markup)
 
+    def test_speech_removes_markup_without_losing_image_description(self):
+        from voice_output import speech_text
+        self.assertEqual(
+            speech_text("See ![blue avatar](https://example.com/a.png) &amp; <b>listen</b>"),
+            "See blue avatar &  listen ",
+        )
+        self.assertEqual(speech_text("&lt;safe&gt;"), "<safe>")
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
