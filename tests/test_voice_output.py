@@ -80,10 +80,17 @@ class SpeechLifecycleTests(unittest.TestCase):
     def test_stop_prevents_delayed_autoplay_when_voices_arrive(self):
         markup = speech_markup("Hello", auto_play=True)
         autoplay = markup.split("const tryAutoStart = () => {", 1)[1].split("window.addEventListener('load'", 1)[0]
-        self.assertIn("if (attemptedAutoStart || stopped) return;", autoplay)
+        self.assertIn("if (attemptedAutoStart || stopped || current) return;", autoplay)
         self.assertIn("speechSynthesis.addEventListener?.('voiceschanged', tryAutoStart)", markup)
         stop = markup.split("document.getElementById('stop').onclick = () => {", 1)[1]
         self.assertIn("stopped = true;", stop)
+
+    def test_delayed_voice_discovery_does_not_restart_manual_speech(self):
+        markup = speech_markup("Hello", auto_play=True)
+        autoplay = markup.split("const tryAutoStart = () => {", 1)[1].split("window.addEventListener('load'", 1)[0]
+        self.assertIn("if (attemptedAutoStart || stopped || current) return;", autoplay)
+        self.assertIn("current = utterance;", markup)
+        self.assertIn("speechSynthesis.addEventListener?.('voiceschanged', tryAutoStart)", markup)
 
     def test_pagehide_resets_speech_state_for_avatar_listeners(self):
         markup = speech_markup("Hello")
