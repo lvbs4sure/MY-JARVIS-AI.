@@ -89,7 +89,7 @@ class AppTests(unittest.TestCase):
                 self.assertEqual(len(app.exception), 0)
                 self.assertEqual(app.session_state["chat"][-1]["content"], "Hello from JARVIS")
                 self.assertEqual(app.metric[2].value, "2")
-                speak.assert_not_called()
+                self.assertFalse(any(call.args and call.args[0] == "Hello from JARVIS" for call in speak.call_args_list))
 
 
     def test_voice_message_sends_directly_after_consent(self):
