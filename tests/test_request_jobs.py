@@ -46,6 +46,15 @@ class RequestTests(unittest.TestCase):
         self.assertEqual(state["assistant_state"], "error")
         self.assertIn("Invalid transcription", state["voice_error"])
 
+    def test_missing_provider_metadata_does_not_crash_reply(self):
+        from types import SimpleNamespace
+        job = SimpleNamespace(finished=SimpleNamespace(is_set=lambda: True), take_result=lambda: JobFailure(), cancel_event=SimpleNamespace(is_set=lambda: False), kind="chat", metadata={})
+        state = {"request_job": job, "assistant_state": "busy", "chat": []}
+        with patch("conversation_flow.record_activity"):
+            self.assertTrue(finish_request(state))
+        self.assertEqual(state["chat"][0]["request_provider"], "unknown")
+        self.assertEqual(state["assistant_state"], "error")
+
     def test_mute_cancels_pending_transcription_without_answer(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(memory_store,"DB_PATH",Path(folder)/"test.db"), patch("jarvis_ai.generate_reply_result") as reply:
             job=RequestJob("voice",lambda token:(token.wait(5) and "late speech",None),{"provider":"gemini"})
