@@ -53,6 +53,7 @@ function refreshVoices() {{
 if ('speechSynthesis' in window) {{ refreshVoices(); speechSynthesis.addEventListener?.('voiceschanged', refreshVoices); }}
 let current;
 let stopped = false;
+let speechRequested = false;
 let previewTimer = null;
 const mouth = document.getElementById('mouth');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -108,7 +109,7 @@ document.getElementById('speak').onclick = () => {{
 if (autoStart && 'speechSynthesis' in window) {{
   let attemptedAutoStart = false;
   const tryAutoStart = () => {{
-    if (attemptedAutoStart || stopped || current) return;
+    if (attemptedAutoStart || speechRequested || stopped || current) return;
     refreshVoices();
     if (!localVoices.length) {{ status.textContent = 'Waiting for an installed local voice. You can press Speak manually.'; return; }}
     attemptedAutoStart = true;
