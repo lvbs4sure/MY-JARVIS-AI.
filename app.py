@@ -167,7 +167,7 @@ with right:
                     if message.get("cancelled"):
                         st.caption("Interrupted; omitted from future AI context.")
                     if message["role"]=="assistant" and message.get("ok", True) and avatar_style!="Animated wireframe face":
-                        speak_button(message["content"])
+                        speak_button(message["content"], auto_play=bool(st.session_state.get("auto_speak_replies", False) and message is st.session_state.chat[-1]))
         if st.session_state.get("last_request"):
             st.caption(st.session_state.last_request)
         if busy:
@@ -196,6 +196,7 @@ with right:
         with voice_tile:
             with st.popover("Voice",icon=":material/mic:",width="stretch"):
                 st.markdown("### Voice message")
+                st.toggle("Speak new replies automatically", key="auto_speak_replies", help="Uses an installed local browser voice. Your browser may require a click before playback.")
                 st.caption("Recording stays in this session until you explicitly allow the Gemini upload.")
                 muted=st.toggle("Mute microphone", key="microphone_muted", on_change=reset_voice_capture)
                 st.caption("Browser/Windows settings choose the microphone and output device. No wake-word or background listening is active.")
