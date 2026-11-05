@@ -33,7 +33,7 @@ class TalkingAvatarIntegrationTests(unittest.TestCase):
         markup = render.call_args.args[0]
         self.assertNotIn("</script><script>alert(1)</script>", markup)
         self.assertIn("window.JARVIS_PREVIEW_REPLY =", markup)
-        self.assertIn("u003c", markup)
+        self.assertNotIn("alert(1)</script>", markup)
         self.assertIn("speak.onclick=", markup)
 
     def test_missing_preview_fails_safely(self):
