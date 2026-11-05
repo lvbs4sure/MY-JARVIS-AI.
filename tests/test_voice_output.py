@@ -42,6 +42,8 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("utterance.onboundary = (event) =>", markup)
         self.assertIn("current !== utterance || stopped || speechSynthesis.paused", handler)
         self.assertIn("charIndex: Number.isFinite(event.charIndex) ? event.charIndex : null", handler)
+        self.assertIn("charLength: Number.isFinite(event.charLength) ? event.charLength : null", handler)
+        self.assertIn("boundaryName: typeof event.name === 'string' ? event.name : null", handler)
         self.assertIn("elapsedTime: Number.isFinite(event.elapsedTime) ? event.elapsedTime : null", handler)
         self.assertIn("new CustomEvent('jarvis-boundary'", handler)
         self.assertIn("not exact lip-sync", markup)
