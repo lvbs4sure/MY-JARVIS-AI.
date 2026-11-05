@@ -36,6 +36,16 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("emitSpeechState('speaking')", markup)
         self.assertIn("emitSpeechState('ready')", markup)
 
+    def test_boundary_event_exposes_timing_without_claiming_phoneme_sync(self):
+        markup = speech_markup("Hello")
+        handler = markup.split("utterance.onboundary = ", 1)[1].split("utterance.onpause = ", 1)[0]
+        self.assertIn("utterance.onboundary = (event) =>", markup)
+        self.assertIn("current !== utterance || stopped || speechSynthesis.paused", handler)
+        self.assertIn("charIndex: Number.isFinite(event.charIndex) ? event.charIndex : null", handler)
+        self.assertIn("elapsedTime: Number.isFinite(event.elapsedTime) ? event.elapsedTime : null", handler)
+        self.assertIn("new CustomEvent('jarvis-boundary'", handler)
+        self.assertIn("not exact lip-sync", markup)
+
     def test_speech_text_cannot_inject_script_markup(self):
         markup = speech_markup("</script><script>alert(1)</script>")
         self.assertNotIn("</script><script>alert(1)", markup)
