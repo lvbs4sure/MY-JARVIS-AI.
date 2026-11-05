@@ -35,7 +35,7 @@ def finish_request(state):
     if isinstance(result, JobFailure) or not isinstance(result, ReplyResult):
         result = ReplyResult("The request could not complete. Retry manually.", False, job.metadata.get("provider", "unknown"), "unexpected", True)
     state["chat"].append({"role":"assistant", "content":result.text, "ok":result.ok,
-        "retryable":result.retryable, "request_provider":job.metadata["provider"],
+        "retryable":result.retryable, "request_provider":job.metadata.get("provider", "unknown"),
         "request_model":job.metadata.get("local_model")})
     state["last_request"] = f"{result.provider.upper()} · {result.latency_ms} ms · {result.kind}"
     state["assistant_state"] = "ready" if result.ok else "error"
