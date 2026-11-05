@@ -51,8 +51,15 @@ class SpeechLifecycleTests(unittest.TestCase):
         enabled = speech_markup("Hello", auto_play=True)
         self.assertIn("const autoStart = true;", enabled)
         self.assertIn("if (autoStart)", enabled)
-        self.assertIn("if (localVoices.length)", enabled)
-        self.assertIn("Select an installed voice", enabled)
+        self.assertIn("if (!localVoices.length)", enabled)
+        self.assertIn("Select an installed local voice first.", enabled)
+
+    def test_autoplay_waits_for_local_voice_without_cloud_fallback(self):
+        markup = speech_markup("Hello", auto_play=True)
+        self.assertIn("if (!localVoices.length)", markup)
+        self.assertIn("attemptedAutoStart = true;", markup)
+        self.assertIn("Waiting for an installed local voice", markup)
+        self.assertIn("voice.localService", markup)
 
     def test_local_voice_prefers_browser_language(self):
         markup = speech_markup("Bonjour")
