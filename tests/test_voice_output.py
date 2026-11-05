@@ -50,7 +50,7 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("const autoStart = false;", speech_markup("Hello"))
         enabled = speech_markup("Hello", auto_play=True)
         self.assertIn("const autoStart = true;", enabled)
-        self.assertIn("if (autoStart)", enabled)
+        self.assertIn("if (autoStart && 'speechSynthesis' in window)", enabled)
         self.assertIn("if (!localVoices.length)", enabled)
         self.assertIn("Select an installed local voice first.", enabled)
 
