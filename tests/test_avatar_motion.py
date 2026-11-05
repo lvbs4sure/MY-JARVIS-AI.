@@ -3,9 +3,21 @@ import unittest
 from unittest.mock import patch
 
 from ui_theme import CSS, render_avatar
+from animated_avatar import moving_face_markup, render_moving_face
 
 
 class AvatarMotionTests(unittest.TestCase):
+    def test_talking_face_uses_speech_events_and_opt_in_playback(self):
+        markup = moving_face_markup("Hello", auto_play=True)
+        self.assertIn("const autoStart = true;", markup)
+        self.assertIn("jarvis-boundary", markup)
+        self.assertIn("jarvis-speech", markup)
+        self.assertIn("face.dataset.mouth", markup)
+        self.assertIn("const autoStart = false;", moving_face_markup("Hello"))
+        with patch("animated_avatar.components.html") as html:
+            render_moving_face("Hello", auto_play=True)
+            self.assertEqual(html.call_args.kwargs["height"], 580)
+
     def test_idle_motion_and_thinking_state(self):
         self.assertIn("@keyframes jarvis-presence", CSS)
         self.assertIn(".state-thinking .holo-presence", CSS)
