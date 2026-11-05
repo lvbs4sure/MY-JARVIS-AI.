@@ -12,6 +12,7 @@ from memory_store import add_memory, list_memories, search_memories, count_memor
 from jarvis_ai import generate_reply_result, transcribe_audio
 from voice_output import speak_button
 from animated_avatar import render_moving_face
+from talking_avatar_preview import render_talking_avatar_preview
 from file_preview import preview_upload
 from camera_preview import render_camera_preview
 import chat_history
@@ -153,7 +154,10 @@ with left:
 with centre:
     avatar_mount=st.empty()
     with avatar_mount.container():
-        render_avatar(st.session_state.assistant_state,reduced_motion)
+        if avatar_style!="Talking humanoid preview":
+            render_avatar(st.session_state.assistant_state,reduced_motion)
+        else:
+            render_talking_avatar_preview()
         if avatar_style=="Animated wireframe face":
             latest_reply=next((m["content"] for m in reversed(st.session_state.chat) if m["role"]=="assistant" and m.get("ok",True)), "")
             last_is_reply=bool(st.session_state.chat and st.session_state.chat[-1].get("role")=="assistant" and st.session_state.chat[-1].get("ok",True))
@@ -320,7 +324,7 @@ with right:
         with settings_tile:
             with st.popover("Settings",icon=":material/settings:",width="stretch"):
                 st.markdown("### Personal settings")
-                st.selectbox("Hologram display",["Holographic scene","Animated wireframe face"],key="avatar_style",help="Animated preview adds approximate speech-linked mouth motion. Original holographic scene remains available.")
+                st.selectbox("Hologram display",["Holographic scene","Animated wireframe face","Talking humanoid preview"],key="avatar_style",help="Talking humanoid preview has its own opt-in test voice and is not yet linked to chat replies. Original scene remains the default.")
                 assistant_name=st.text_input("Assistant name",os.getenv("JARVIS_NAME","JARVIS"),key="assistant_name",max_chars=50).strip() or "JARVIS"
                 personality=st.selectbox("Personality",["Helpful and concise","Friendly and encouraging","Professional and precise","Curious and creative"],key="personality")
                 st.caption("Your original holographic JARVIS appearance is preserved.")
