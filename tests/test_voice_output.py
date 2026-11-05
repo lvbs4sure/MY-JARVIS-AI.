@@ -44,7 +44,9 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("charIndex: Number.isFinite(event.charIndex) ? event.charIndex : null", handler)
         self.assertIn("charLength: Number.isFinite(event.charLength) ? event.charLength : null", handler)
         self.assertIn("boundaryName: typeof event.name === 'string' ? event.name : null", handler)
-        self.assertIn("elapsedTime: Number.isFinite(event.elapsedTime) ? event.elapsedTime : null", handler)
+        self.assertIn("elapsedTime: Number.isFinite(event.elapsedTime) && event.elapsedTime >= 0 ? event.elapsedTime : null", handler)
+        self.assertIn("speechRate: utterance.rate", handler)
+        self.assertIn("textLength: message.length", handler)
         self.assertIn("new CustomEvent('jarvis-boundary'", handler)
         self.assertIn("not exact lip-sync", markup)
 
