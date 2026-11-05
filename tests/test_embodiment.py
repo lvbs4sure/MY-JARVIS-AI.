@@ -12,7 +12,7 @@ class EmbodimentTests(unittest.TestCase):
     def test_model_text_is_never_inserted_as_html(self):
         markup=moving_face_markup('</script><img src=x onerror=alert(1)>')
         self.assertNotIn('</script><img',markup)
-        self.assertIn('\\u003c/script\\u003e',markup)
+        self.assertNotIn('onerror=alert(1)',markup)
         self.assertIn('voice.localService',markup)
 
     def test_mouth_is_driven_by_speech_events_and_respects_reduced_motion(self):
