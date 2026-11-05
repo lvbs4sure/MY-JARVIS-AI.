@@ -83,6 +83,7 @@ function speechPulse() {{
 reducedMotion.addEventListener?.('change', () => {{ if (reducedMotion.matches) setMouth(false); }});
 
 document.getElementById('speak').onclick = () => {{
+  speechRequested = true;
   if (!('speechSynthesis' in window)) {{ status.textContent = 'Speech is unavailable in this browser.'; return; }}
   const selectedVoice = localVoices.find(voice => voice.voiceURI === voiceMenu.value);
   if (!selectedVoice) {{ status.textContent = 'Select an installed local voice first.'; return; }}
