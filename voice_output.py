@@ -105,7 +105,7 @@ document.getElementById('speak').onclick = () => {{
   status.textContent = 'Starting…';
   try {{ speechSynthesis.speak(utterance); }} catch (error) {{ if (current === utterance) {{ current = null; stopPreview(); status.textContent = 'Speech could not start'; emitSpeechState('ready'); }} }}
 }};
-if (autoStart) {{
+if (autoStart && 'speechSynthesis' in window) {{
   let attemptedAutoStart = false;
   const tryAutoStart = () => {{
     if (attemptedAutoStart || stopped) return;
