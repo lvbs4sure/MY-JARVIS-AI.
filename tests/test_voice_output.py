@@ -19,6 +19,13 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("current !== utterance || stopped", pause_handler)
         self.assertIn("current !== utterance || stopped", resume_handler)
 
+    def test_failed_speech_start_resets_avatar_state(self):
+        markup = speech_markup("Hello")
+        failure_handler = markup.split("try { speechSynthesis.speak(utterance); } catch (error) {", 1)[1].split("};", 1)[0]
+        self.assertIn("current = null", failure_handler)
+        self.assertIn("stopPreview()", failure_handler)
+        self.assertIn("detail:'ready'", failure_handler)
+
     def test_speech_text_cannot_inject_script_markup(self):
         markup = speech_markup("</script><script>alert(1)</script>")
         self.assertNotIn("</script><script>alert(1)", markup)
