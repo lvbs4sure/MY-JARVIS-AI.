@@ -108,7 +108,7 @@ document.getElementById('speak').onclick = () => {{
 if (autoStart && 'speechSynthesis' in window) {{
   let attemptedAutoStart = false;
   const tryAutoStart = () => {{
-    if (attemptedAutoStart || stopped) return;
+    if (attemptedAutoStart || stopped || current) return;
     refreshVoices();
     if (!localVoices.length) {{ status.textContent = 'Waiting for an installed local voice. You can press Speak manually.'; return; }}
     attemptedAutoStart = true;
