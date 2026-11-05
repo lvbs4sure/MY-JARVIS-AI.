@@ -108,7 +108,7 @@ document.getElementById('speak').onclick = () => {{
 if (autoStart) {{
   let attemptedAutoStart = false;
   const tryAutoStart = () => {{
-    if (attemptedAutoStart) return;
+    if (attemptedAutoStart || stopped) return;
     refreshVoices();
     if (!localVoices.length) {{ status.textContent = 'Waiting for an installed local voice. You can press Speak manually.'; return; }}
     attemptedAutoStart = true;
@@ -123,7 +123,7 @@ document.getElementById('pause').onclick = () => {{
 document.getElementById('resume').onclick = () => {{
   if ('speechSynthesis' in window && current && !stopped && speechSynthesis.paused) {{ speechSynthesis.resume(); active = true; status.textContent = 'Speaking'; emitSpeechState('speaking'); }}
 }};
-window.addEventListener('pagehide', () => {{ current = null; stopped = true; if ('speechSynthesis' in window) speechSynthesis.cancel(); stopPreview(); }});
+window.addEventListener('pagehide', () => {{ current = null; stopped = true; if ('speechSynthesis' in window) speechSynthesis.cancel(); stopPreview(); emitSpeechState('ready'); }});
 document.getElementById('stop').onclick = () => {{
   stopped = true;
   current = null;
