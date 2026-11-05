@@ -13,10 +13,11 @@ def speech_text(text):
     return text[:12000]
 
 
-def speech_markup(text: str, label: str = "🔊 Speak reply"):
+def speech_markup(text: str, label: str = "🔊 Speak reply", *, auto_play: bool = False):
     # Escape JS string and HTML markup independently.
     safe_text = json.dumps(speech_text(text), ensure_ascii=True).replace("<", "\\u003c").replace(">", "\\u003e")
     safe_label = html.escape(str(label)[:80], quote=True)
+    auto_start = "true" if auto_play else "false"
     markup = f"""<!doctype html><html><head><style>button,select {{font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px;border-radius:5px;margin:2px}} label {{display:block}} select {{max-width:calc(100% - 70px)}} </style></head><body style="margin:0;background:transparent;color:#a9bddb;font:11px system-ui">
 <button id="speak" style="font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px 8px;border-radius:5px;cursor:pointer">{safe_label}</button>
 <button id="stop" style="font:inherit;color:#c6dbf4;background:#101a34;border:1px solid #6972a4;padding:6px 8px;border-radius:5px;cursor:pointer">Interrupt speech</button>
@@ -30,6 +31,7 @@ def speech_markup(text: str, label: str = "🔊 Speak reply"):
 <span id="status" role="status" aria-live="polite" style="margin-left:6px">Ready</span>
 <script>
 const message = {safe_text};
+const autoStart = {auto_start};
 const status = document.getElementById('status');
 const voiceMenu = document.getElementById('voice');
 let localVoices = [];
@@ -103,6 +105,13 @@ document.getElementById('speak').onclick = () => {{
   status.textContent = 'Starting…';
   try {{ speechSynthesis.speak(utterance); }} catch (error) {{ if (current === utterance) {{ current = null; stopPreview(); status.textContent = 'Speech could not start'; emitSpeechState('ready'); }} }}
 }};
+if (autoStart) {{
+  window.addEventListener('load', () => {{
+    refreshVoices();
+    if (localVoices.length) document.getElementById('speak').click();
+    else status.textContent = 'Select an installed voice and press Speak.';
+  }}, {{once:true}});
+}}
 document.getElementById('pause').onclick = () => {{
   if ('speechSynthesis' in window && current && speechSynthesis.speaking && !speechSynthesis.paused) {{ speechSynthesis.pause(); stopPreview(); status.textContent = 'Paused'; emitSpeechState('paused'); }}
 }};
@@ -122,5 +131,5 @@ document.getElementById('stop').onclick = () => {{
     return markup
 
 
-def speak_button(text: str, label: str = "🔊 Speak reply"):
-    components.html(speech_markup(text,label), height=315, scrolling=True)
+def speak_button(text: str, label: str = "🔊 Speak reply", *, auto_play: bool = False):
+    components.html(speech_markup(text,label,auto_play=auto_play), height=315, scrolling=True)
