@@ -89,7 +89,7 @@ def _failure(exc):
     return (f"Gemini request failed ({type(exc).__name__}). Check configuration.", "unexpected", False, None)
 
 
-def _gemini_content(key, contents, model, cancel_event=None, *, timeout_ms=15000, attempts=2):
+def _gemini_content(key, contents, model, cancel_event=None, *, timeout_ms=15000, attempts=2, config=None):
     from google import genai
     cancelled = ("Request interrupted. A request already sent cannot be recalled.", "cancelled", False, None)
     if cancel_event is not None and cancel_event.is_set():
@@ -101,7 +101,7 @@ def _gemini_content(key, contents, model, cancel_event=None, *, timeout_ms=15000
                 try:
                     if cancel_event is not None and cancel_event.is_set():
                         return None, cancelled
-                    response = client.models.generate_content(model=model, contents=contents)
+                    response = client.models.generate_content(model=model, contents=contents, **({"config": config} if config is not None else {}))
                     if cancel_event is not None and cancel_event.is_set():
                         return None, cancelled
                     return response, None
