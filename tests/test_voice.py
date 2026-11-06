@@ -101,7 +101,7 @@ class VoiceTests(unittest.TestCase):
     def test_invalid_browser_boundary_is_discarded_before_dispatch(self):
         markup = self.render("Hello")
         self.assertIn("event.charIndex >= message.length) return; speechPulse(); window.dispatchEvent", markup)
-        self.assertIn("if (current !== utterance || stopped || !active || speechSynthesis.paused) return;", markup)
+        self.assertIn("if (current !== utterance || stopped || !active || !speechSynthesis.speaking || speechSynthesis.paused) return;", markup)
 
     def test_manual_speech_disables_late_autostart(self):
         from voice_output import speech_markup
