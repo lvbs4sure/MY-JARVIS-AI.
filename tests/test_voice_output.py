@@ -58,6 +58,17 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("new CustomEvent('jarvis-boundary'", handler)
         self.assertIn("not exact lip-sync", markup)
 
+    def test_boundary_events_correlate_to_the_active_utterance(self):
+        markup = speech_markup("Hello")
+        self.assertIn("let utteranceSequence = 0;", markup)
+        self.assertIn("const utteranceId = ++utteranceSequence;", markup)
+        self.assertIn("let utteranceStartedAtMs = null;", markup)
+        self.assertIn("utteranceStartedAtMs = performance.now();", markup)
+        handler = markup.split("utterance.onboundary = ", 1)[1].split("utterance.onpause = ", 1)[0]
+        self.assertIn("current !== utterance || stopped", handler)
+        self.assertIn("detail: {utteranceId, utteranceStartedAtMs, charIndex:", handler)
+        self.assertIn("observedAtMs: performance.now()", handler)
+
     def test_auto_speech_requires_explicit_opt_in(self):
         self.assertIn("const autoStart = false;", speech_markup("Hello"))
         enabled = speech_markup("Hello", auto_play=True)
