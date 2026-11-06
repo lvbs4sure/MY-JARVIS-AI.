@@ -101,7 +101,7 @@ class VoiceTests(unittest.TestCase):
     def test_invalid_browser_boundary_is_discarded_before_dispatch(self):
         markup = self.render("Hello")
         self.assertIn("event.charIndex >= message.length || event.charIndex <= lastBoundaryCharIndex) return; if (Number.isFinite(event.elapsedTime)", markup)
-        self.assertIn("lastBoundaryElapsedSeconds) return; lastBoundaryElapsedSeconds = event.elapsedTime; } speechPulse(); window.dispatchEvent", markup)
+        self.assertIn("lastBoundaryElapsedSeconds) return; lastBoundaryElapsedSeconds = event.elapsedTime; } lastBoundaryCharIndex = event.charIndex; speechPulse(); window.dispatchEvent", markup)
         self.assertIn("if (current !== utterance || stopped || !active || !speechSynthesis.speaking || speechSynthesis.paused) return;", markup)
 
     def test_duplicate_speech_boundaries_are_ignored(self):
