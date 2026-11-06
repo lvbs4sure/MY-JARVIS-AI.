@@ -104,6 +104,11 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("lastBoundaryElapsedSeconds) return; lastBoundaryElapsedSeconds = event.elapsedTime; } speechPulse(); window.dispatchEvent", markup)
         self.assertIn("if (current !== utterance || stopped || !active || !speechSynthesis.speaking || speechSynthesis.paused) return;", markup)
 
+    def test_duplicate_speech_boundaries_are_ignored(self):
+        markup = self.render("Hello")
+        self.assertIn("event.charIndex <= lastBoundaryCharIndex) return;", markup)
+        self.assertIn("lastBoundaryCharIndex = event.charIndex; speechPulse();", markup)
+
     def test_boundary_exposes_observation_and_audio_elapsed_times(self):
         markup = self.render("Hello")
         self.assertIn("observedAtMs: performance.now()", markup)
