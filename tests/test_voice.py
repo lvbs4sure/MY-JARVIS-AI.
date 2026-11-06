@@ -103,6 +103,12 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("event.charIndex >= message.length) return; speechPulse(); window.dispatchEvent", markup)
         self.assertIn("if (current !== utterance || stopped || !active || !speechSynthesis.speaking || speechSynthesis.paused) return;", markup)
 
+    def test_boundary_exposes_observation_and_audio_elapsed_times(self):
+        markup = self.render("Hello")
+        self.assertIn("observedAtMs: performance.now()", markup)
+        self.assertIn("audioElapsedSeconds: Number.isFinite(event.elapsedTime)", markup)
+        self.assertIn("event.elapsedTime >= 0 ? event.elapsedTime : null", markup)
+
     def test_manual_speech_disables_late_autostart(self):
         from voice_output import speech_markup
         markup = speech_markup("Hello", auto_play=True)
