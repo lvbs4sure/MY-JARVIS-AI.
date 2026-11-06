@@ -118,7 +118,7 @@ class SpeechLifecycleTests(unittest.TestCase):
     def test_speech_text_cannot_inject_script_markup(self):
         markup = speech_markup("</script><script>alert(1)</script>")
         self.assertNotIn("</script><script>alert(1)", markup)
-        self.assertIn('const message = "  alert(1) ";', markup)
+        self.assertIn('const message = "  ";', markup)
 
 
 if __name__ == "__main__":
