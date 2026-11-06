@@ -15,7 +15,7 @@ def speech_text(text):
     text = re.sub(r"[*_`]+", "", text)
     # Do not read executable or styling content aloud. Preserve encoded markup as text.
     text = re.sub(r"<(script|style|template|noscript|svg|iframe|object|audio|video|canvas)\b[^>]*>.*?</\1\s*>", " ", text, flags=re.I | re.S)
-    text = re.sub(r"<!--.*?-->", " ", text, flags=re.S)
+    # An unterminated hidden-content element must not expose its remaining body.\n    text = re.sub(r"<(script|style|template|noscript|svg|iframe|object|audio|video|canvas)\\b[^>]*>(?![\\s\\S]*?</\\1\\s*>)[\\s\\S]*$", " ", text, flags=re.I)\n    text = re.sub(r"<!--.*?-->", " ", text, flags=re.S)
     # Decode entities only after removing tags so encoded markup remains spoken text.
     text = re.sub(r"</?[A-Za-z][A-Za-z0-9:-]*(?:\s[^>\n]*)?\s*/?>", " ", text)
     return html.unescape(text)[:12000]
