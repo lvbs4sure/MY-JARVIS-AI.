@@ -7,6 +7,8 @@ import streamlit.components.v1 as components
 
 def speech_text(text):
     text = re.sub(r"```.*?```", " Code block omitted from speech. ", str(text), flags=re.S)
+    # An unfinished fenced block is still code, not conversational speech.
+    text = re.sub(r"```[^\n]*\n?[\s\S]*$", " Code block omitted from speech. ", text)
     text = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", text)
     text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
     text = re.sub(r"(?m)^\s{0,3}#{1,6}\s+", "", text)
