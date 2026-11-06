@@ -60,6 +60,7 @@ if ('speechSynthesis' in window) {{ refreshVoices(); speechSynthesis.addEventLis
 let current;
 let stopped = false;
 let speechRequested = false;
+let utteranceSequence = 0;
 let previewTimer = null;
 const mouth = document.getElementById('mouth');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -102,6 +103,8 @@ document.getElementById('speak').onclick = () => {{
   stopPreview();
   stopped = false;
   const utterance = new SpeechSynthesisUtterance(message);
+  const utteranceId = ++utteranceSequence;
+  let utteranceStartedAtMs = null;
   let lastBoundaryElapsedSeconds = -1;
   let lastBoundaryCharIndex = -1;
   current = utterance;
@@ -109,8 +112,8 @@ document.getElementById('speak').onclick = () => {{
   utterance.lang = selectedVoice.lang;
   const requestedRate = Number(document.getElementById('rate').value);
   utterance.rate = Number.isFinite(requestedRate) ? Math.max(0.5, Math.min(2, requestedRate)) : 1;
-  utterance.onstart = () => {{ if (current !== utterance || stopped) return; active = true; status.textContent = 'Speaking'; emitSpeechState('speaking'); }};
-  utterance.onboundary = (event) => {{ if (current !== utterance || stopped || !active || !speechSynthesis.speaking || speechSynthesis.paused) return; if (!Number.isInteger(event.charIndex) || event.charIndex < 0 || event.charIndex >= message.length || event.charIndex <= lastBoundaryCharIndex) return; if (Number.isFinite(event.elapsedTime) && event.elapsedTime >= 0) {{ if (event.elapsedTime < lastBoundaryElapsedSeconds) return; lastBoundaryElapsedSeconds = event.elapsedTime; }} lastBoundaryCharIndex = event.charIndex; speechPulse(); window.dispatchEvent(new CustomEvent('jarvis-boundary', {{detail: {{charIndex: Number.isInteger(event.charIndex) && event.charIndex >= 0 && event.charIndex < message.length ? event.charIndex : null, charLength: Number.isInteger(event.charLength) && event.charLength >= 0 && Number.isInteger(event.charIndex) && event.charIndex >= 0 && event.charIndex < message.length && event.charIndex + event.charLength <= message.length ? event.charLength : null, boundaryName: typeof event.name === 'string' ? event.name : null, elapsedTime: Number.isFinite(event.elapsedTime) && event.elapsedTime >= 0 ? event.elapsedTime : null, speechRate: utterance.rate, textLength: message.length, observedAtMs: performance.now(), audioElapsedSeconds: Number.isFinite(event.elapsedTime) && event.elapsedTime >= 0 ? event.elapsedTime : null}}}})); }};
+  utterance.onstart = () => {{ if (current !== utterance || stopped) return; active = true; utteranceStartedAtMs = performance.now(); status.textContent = 'Speaking'; emitSpeechState('speaking'); }};
+  utterance.onboundary = (event) => {{ if (current !== utterance || stopped || !active || !speechSynthesis.speaking || speechSynthesis.paused) return; if (!Number.isInteger(event.charIndex) || event.charIndex < 0 || event.charIndex >= message.length || event.charIndex <= lastBoundaryCharIndex) return; if (Number.isFinite(event.elapsedTime) && event.elapsedTime >= 0) {{ if (event.elapsedTime < lastBoundaryElapsedSeconds) return; lastBoundaryElapsedSeconds = event.elapsedTime; }} lastBoundaryCharIndex = event.charIndex; speechPulse(); window.dispatchEvent(new CustomEvent('jarvis-boundary', {{detail: {{utteranceId, utteranceStartedAtMs, charIndex: Number.isInteger(event.charIndex) && event.charIndex >= 0 && event.charIndex < message.length ? event.charIndex : null, charLength: Number.isInteger(event.charLength) && event.charLength >= 0 && Number.isInteger(event.charIndex) && event.charIndex >= 0 && event.charIndex < message.length && event.charIndex + event.charLength <= message.length ? event.charLength : null, boundaryName: typeof event.name === 'string' ? event.name : null, elapsedTime: Number.isFinite(event.elapsedTime) && event.elapsedTime >= 0 ? event.elapsedTime : null, speechRate: utterance.rate, textLength: message.length, observedAtMs: performance.now(), audioElapsedSeconds: Number.isFinite(event.elapsedTime) && event.elapsedTime >= 0 ? event.elapsedTime : null}}}})); }};
   utterance.onpause = () => {{ if (current !== utterance || stopped) return; stopPreview(); status.textContent = 'Paused'; emitSpeechState('paused'); }};
   utterance.onresume = () => {{ if (current !== utterance || stopped) return; active = true; status.textContent = 'Speaking'; emitSpeechState('speaking'); }};
   utterance.onend = () => {{ if (current !== utterance) return; current = null; stopPreview(); status.textContent = stopped ? 'Stopped' : 'Finished'; emitSpeechState('ready'); }};
