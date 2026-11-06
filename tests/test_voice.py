@@ -192,6 +192,24 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("Visible", spoken)
         self.assertIn("end", spoken)
 
+    def test_document_metadata_and_form_drafts_are_not_spoken(self):
+        from voice_output import speech_text
+        spoken = speech_text(
+            "Visible <head><meta name='token' content='hidden'>private metadata</head>"
+            "<title>private title</title>"
+            "<textarea>private unsent draft</textarea> end"
+        )
+        for secret in ("private metadata", "private title", "private unsent draft"):
+            self.assertNotIn(secret, spoken)
+        self.assertIn("Visible", spoken)
+        self.assertIn("end", spoken)
+
+    def test_unterminated_form_draft_is_not_spoken(self):
+        from voice_output import speech_text
+        spoken = speech_text("Visible <textarea>private unsent draft")
+        self.assertIn("Visible", spoken)
+        self.assertNotIn("private unsent draft", spoken)
+
     def test_unterminated_hidden_html_is_not_spoken(self):
         from voice_output import speech_text
         for tag in ("script", "style", "template", "iframe", "object"):
