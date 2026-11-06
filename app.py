@@ -170,6 +170,7 @@ with centre:
 with right:
     with st.container(key="chat_window"):
         st.markdown("### Talk with JARVIS")
+        st.caption("JARVIS · Simplified interface v2 · 2026-11-06")
         # Provider and diagnostics remain in the System panel, not the conversation.
         conversation=st.container(height=230,border=False)
         with conversation:
@@ -189,7 +190,7 @@ with right:
             st.caption("The last request failed. Retry sends the same conversation to the same provider.")
             retry = st.button("Retry last message", key="retry_reply", disabled=busy)
         typed=st.chat_input(f"Ask {assistant_name} anything…",key="chat_prompt", disabled=busy)
-    with st.container(key="shortcut_window"):
+    with st.expander("More tools · Memory, Voice, System, Settings", expanded=False):
         window_title("Shortcuts")
         memory_tile,voice_tile,system_tile,settings_tile=st.columns(4,gap="small")
         with memory_tile:
