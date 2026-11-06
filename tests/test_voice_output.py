@@ -42,6 +42,9 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("utterance.onboundary = (event) =>", markup)
         self.assertIn("current !== utterance || stopped || !active || !speechSynthesis.speaking || speechSynthesis.paused", handler)
         self.assertIn("if (!Number.isInteger(event.charIndex) || event.charIndex < 0 || event.charIndex >= message.length) return;", handler)
+        self.assertIn("let lastBoundaryCharIndex = -1;", markup)
+        self.assertIn("event.charIndex < lastBoundaryCharIndex", handler)
+        self.assertIn("lastBoundaryCharIndex = event.charIndex; speechPulse();", handler)
         self.assertIn("if (event.elapsedTime < lastBoundaryElapsedSeconds) return;", handler)
         self.assertIn("lastBoundaryElapsedSeconds = event.elapsedTime;", handler)
         # A boundary callback before onstart must not drive a mouth preview.
