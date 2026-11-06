@@ -87,6 +87,11 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("if (ownedSpeech && 'speechSynthesis' in window) speechSynthesis.cancel();", markup)
         self.assertEqual(markup.count("if (ownedSpeech && 'speechSynthesis' in window) speechSynthesis.cancel();"), 2)
 
+    def test_starting_idle_speech_does_not_cancel_unrelated_audio(self):
+        markup = self.render("Hello")
+        self.assertIn("const ownedSpeech = current !== null;\n  current = null;\n  if (ownedSpeech) speechSynthesis.cancel();", markup)
+        self.assertNotIn("current = null;\n  speechSynthesis.cancel();", markup)
+
     def test_speech_startup_failure_does_not_leave_preview_active(self):
         markup = self.render("Hello")
         self.assertIn("try { speechSynthesis.speak(utterance); } catch (error)", markup)
