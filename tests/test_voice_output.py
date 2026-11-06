@@ -125,6 +125,13 @@ class SpeechLifecycleTests(unittest.TestCase):
         # voiceschanged from unexpectedly starting another utterance.
         self.assertIn("current = null; stopPreview();", markup)
 
+    def test_initial_pagehide_does_not_cancel_unowned_speech(self):
+        markup = speech_markup("Hello")
+        self.assertIn("let current = null;", markup)
+        handler = markup.split("window.addEventListener('pagehide',", 1)[1].split("document.getElementById('stop').onclick", 1)[0]
+        self.assertIn("const ownedSpeech = current !== null;", handler)
+        self.assertIn("if (ownedSpeech && 'speechSynthesis' in window) speechSynthesis.cancel();", handler)
+
     def test_pagehide_resets_speech_state_for_avatar_listeners(self):
         markup = speech_markup("Hello")
         handler = markup.split("window.addEventListener('pagehide',", 1)[1].split("document.getElementById('stop').onclick", 1)[0]
