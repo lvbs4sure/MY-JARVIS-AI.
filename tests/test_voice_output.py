@@ -41,7 +41,7 @@ class SpeechLifecycleTests(unittest.TestCase):
         handler = markup.split("utterance.onboundary = ", 1)[1].split("utterance.onpause = ", 1)[0]
         self.assertIn("utterance.onboundary = (event) =>", markup)
         self.assertIn("current !== utterance || stopped || !active || !speechSynthesis.speaking || speechSynthesis.paused", handler)
-        self.assertIn("if (!Number.isInteger(event.charIndex) || event.charIndex < 0 || event.charIndex >= message.length) return;", handler)
+        self.assertIn("if (!Number.isInteger(event.charIndex) || event.charIndex < 0 || event.charIndex >= message.length || event.charIndex <= lastBoundaryCharIndex) return;", handler)
         self.assertIn("let lastBoundaryCharIndex = -1;", markup)
         self.assertIn("event.charIndex <= lastBoundaryCharIndex", handler)
         self.assertIn("lastBoundaryCharIndex = event.charIndex; speechPulse();", handler)
