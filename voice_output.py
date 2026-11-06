@@ -139,12 +139,13 @@ document.getElementById('pause').onclick = () => {{
 document.getElementById('resume').onclick = () => {{
   if ('speechSynthesis' in window && current && !stopped && speechSynthesis.paused) {{ speechSynthesis.resume(); active = true; status.textContent = 'Speaking'; emitSpeechState('speaking'); }}
 }};
-window.addEventListener('pagehide', () => {{ current = null; stopped = true; if ('speechSynthesis' in window) speechSynthesis.cancel(); stopPreview(); emitSpeechState('ready'); }});
+window.addEventListener('pagehide', () => {{ const ownedSpeech = current !== null; current = null; stopped = true; if (ownedSpeech && 'speechSynthesis' in window) speechSynthesis.cancel(); stopPreview(); emitSpeechState('ready'); }});
 document.getElementById('stop').onclick = () => {{
+  const ownedSpeech = current !== null;
   stopped = true;
   current = null;
   stopPreview();
-  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  if (ownedSpeech && 'speechSynthesis' in window) speechSynthesis.cancel();
   status.textContent = 'Stopped';
   emitSpeechState('ready');
 }};
