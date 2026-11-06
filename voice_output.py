@@ -91,6 +91,9 @@ reducedMotion.addEventListener?.('change', () => {{ if (reducedMotion.matches) s
 document.getElementById('speak').onclick = () => {{
   speechRequested = true;
   if (!('speechSynthesis' in window)) {{ status.textContent = 'Speech is unavailable in this browser.'; return; }}
+  // Recheck the browser's current local voices before every request. A removed
+  // or newly cloud-backed voice must not be trusted from a cached selection.
+  refreshVoices();
   const selectedVoice = localVoices.find(voice => voice.voiceURI === voiceMenu.value);
   if (!selectedVoice) {{ status.textContent = 'Select an installed local voice first.'; return; }}
   if (!message.trim()) {{ status.textContent = 'No spoken text in this reply.'; return; }}
