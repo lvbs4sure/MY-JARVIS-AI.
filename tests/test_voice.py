@@ -192,6 +192,13 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("Visible", spoken)
         self.assertIn("end", spoken)
 
+    def test_unterminated_hidden_html_is_not_spoken(self):
+        from voice_output import speech_text
+        for tag in ("script", "style", "template", "iframe", "object"):
+            spoken = speech_text(f"Visible <{tag}>private content")
+            self.assertIn("Visible", spoken)
+            self.assertNotIn("private content", spoken)
+
     def test_unfinished_fenced_code_is_not_spoken(self):
         from voice_output import speech_text
         spoken = speech_text("Visible answer\n```python\nprivate_token = 12345")
