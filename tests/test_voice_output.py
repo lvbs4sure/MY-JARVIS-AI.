@@ -40,7 +40,7 @@ class SpeechLifecycleTests(unittest.TestCase):
         markup = speech_markup("Hello")
         handler = markup.split("utterance.onboundary = ", 1)[1].split("utterance.onpause = ", 1)[0]
         self.assertIn("utterance.onboundary = (event) =>", markup)
-        self.assertIn("current !== utterance || stopped || !active || speechSynthesis.paused", handler)
+        self.assertIn("current !== utterance || stopped || !active || !speechSynthesis.speaking || speechSynthesis.paused", handler)
         self.assertIn("if (!Number.isInteger(event.charIndex) || event.charIndex < 0 || event.charIndex >= message.length) return;", handler)
         self.assertIn("if (event.elapsedTime < lastBoundaryElapsedSeconds) return;", handler)
         self.assertIn("lastBoundaryElapsedSeconds = event.elapsedTime;", handler)
