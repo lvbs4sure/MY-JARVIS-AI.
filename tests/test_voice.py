@@ -77,7 +77,7 @@ class VoiceTests(unittest.TestCase):
         markup = self.render("Hello")
         self.assertIn("utterance.onpause = () =>", markup)
         self.assertIn("utterance.onresume = () =>", markup)
-        self.assertIn("stopped || !active || speechSynthesis.paused", markup)
+        self.assertIn("stopped || !active || !speechSynthesis.speaking || speechSynthesis.paused", markup)
         self.assertIn("speechSynthesis.speaking && !speechSynthesis.paused", markup)
         self.assertIn("current && !stopped && speechSynthesis.paused", markup)
 
