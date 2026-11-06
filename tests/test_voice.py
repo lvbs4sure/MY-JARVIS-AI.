@@ -145,6 +145,19 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("Hello", spoken)
         self.assertIn("world", spoken)
 
+    def test_hidden_template_svg_and_noscript_are_not_spoken(self):
+        from voice_output import speech_text
+        spoken = speech_text(
+            "Hello <template>private draft</template>"
+            "<svg><text>internal label</text></svg>"
+            "<noscript>fallback code</noscript> world"
+        )
+        self.assertNotIn("private draft", spoken)
+        self.assertNotIn("internal label", spoken)
+        self.assertNotIn("fallback code", spoken)
+        self.assertIn("Hello", spoken)
+        self.assertIn("world", spoken)
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
