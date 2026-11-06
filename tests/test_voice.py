@@ -81,6 +81,12 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("speechSynthesis.speaking && !speechSynthesis.paused", markup)
         self.assertIn("current && !stopped && speechSynthesis.paused", markup)
 
+    def test_idle_controls_do_not_cancel_other_browser_speech(self):
+        markup = self.render("Hello")
+        self.assertIn("const ownedSpeech = current !== null;", markup)
+        self.assertIn("if (ownedSpeech && 'speechSynthesis' in window) speechSynthesis.cancel();", markup)
+        self.assertEqual(markup.count("if (ownedSpeech && 'speechSynthesis' in window) speechSynthesis.cancel();"), 2)
+
     def test_speech_startup_failure_does_not_leave_preview_active(self):
         markup = self.render("Hello")
         self.assertIn("try { speechSynthesis.speak(utterance); } catch (error)", markup)
