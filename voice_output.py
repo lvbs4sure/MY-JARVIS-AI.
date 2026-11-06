@@ -14,9 +14,9 @@ def speech_text(text):
     text = re.sub(r"(?m)^\s{0,3}#{1,6}\s+", "", text)
     text = re.sub(r"[*_`]+", "", text)
     # Do not read executable or styling content aloud. Preserve encoded markup as text.
-    text = re.sub(r"<(script|style|template|noscript|svg|iframe|object|audio|video|canvas)\b[^>]*>.*?</\1\s*>", " ", text, flags=re.I | re.S)
+    text = re.sub(r"<(script|style|template|noscript|svg|iframe|object|audio|video|canvas|head|title|textarea)\b[^>]*>.*?</\1\s*>", " ", text, flags=re.I | re.S)
     # Drop unclosed hidden elements and everything after their opening tag.
-    text = re.sub(r"<(script|style|template|noscript|svg|iframe|object|audio|video|canvas)\b[^>]*>[\s\S]*$", " ", text, flags=re.I)
+    text = re.sub(r"<(script|style|template|noscript|svg|iframe|object|audio|video|canvas|head|title|textarea)\b[^>]*>[\s\S]*$", " ", text, flags=re.I)
     text = re.sub(r"<!--.*?-->", " ", text, flags=re.S)
     # An unfinished comment is hidden markup too; never speak its contents.
     text = re.sub(r"<!--[\s\S]*$", " ", text)
