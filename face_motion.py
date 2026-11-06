@@ -1,0 +1,122 @@
+"""Deterministic facial-control signals for a future identity-matched JARVIS rig.
+
+This module does not animate a raster image. A reviewed VRM/glTF renderer must
+map these normalized signals to real eyelid, gaze and facial blendshapes.
+No camera, network, microphone, AI inference or background worker is used.
+"""
+from dataclasses import dataclass
+from typing import Mapping
+import math
+
+_STATES = frozenset({"ready", "listening", "thinking", "speaking", "paused", "error"})
+
+
+def _finite(value, name):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        raise ValueError(f"{name} must be a finite number")
+    return float(value)
+
+
+def _clamp(value, low, high):
+    return max(low, min(high, value))
+
+
+@dataclass(frozen=True)
+class FacePose:
+    """Normalized controls; blink=1 means eyes fully closed."""
+    blink: float
+    gaze_x: float
+    gaze_y: float
+    mouth_open: float
+    expression: str
+
+
+class FaceMotionController:
+    """Clock-sampled facial motion, independent of render frame rate.
+
+    Mouth movement is accepted only from an actual audio-clock LipTimeline.
+    A rig mapping is required before any of these controls become visible.
+    """
+
+    def __init__(self, *, blink_interval_ms=4400, blink_duration_ms=180):
+        self.blink_interval_ms = _finite(blink_interval_ms, "blink interval")
+        self.blink_duration_ms = _finite(blink_duration_ms, "blink duration")
+        if self.blink_interval_ms < 1000 or not 50 <= self.blink_duration_ms <= 600:
+            raise ValueError("Invalid blink timing")
+
+    def sample(self, elapsed_ms, *, state="ready", reduced_motion=False,
+               timeline=None, audio_position_ms=0, audio_playing=False,
+               interrupted=False):
+        elapsed = _finite(elapsed_ms, "elapsed")
+        if elapsed < 0:
+            raise ValueError("Elapsed time cannot be negative")
+        if state not in _STATES:
+            raise ValueError("Unknown avatar state")
+        if not isinstance(reduced_motion, bool) or not isinstance(audio_playing, bool):
+            raise ValueError("Motion flags must be boolean")
+        if not isinstance(interrupted, bool):
+            raise ValueError("Interrupted flag must be boolean")
+
+        if reduced_motion:
+            return FacePose(0.0, 0.0, 0.0, 0.0, state)
+
+        phase = elapsed % self.blink_interval_ms
+        blink = 0.0
+        if phase < self.blink_duration_ms:
+            half = self.blink_duration_ms / 2
+            blink = (phase / half if phase <= half
+                     else (self.blink_duration_ms - phase) / half)
+        # Small deterministic gaze shifts; no camera tracking or emotion inference.
+        gaze_x = 0.16 * math.sin(elapsed / 2300)
+        gaze_y = 0.08 * math.sin(elapsed / 3100)
+        mouth = 0.0
+        if state == "speaking" and audio_playing and not interrupted and timeline is not None:
+            weights = timeline.sample(audio_position_ms, playing=True)
+            # Neutral/silence viseme 0 is never interpreted as mouth movement.
+            mouth = _clamp(1.0 - weights.get(0, 0.0), 0.0, 1.0)
+        return FacePose(blink, gaze_x, gaze_y, mouth, state)
+
+
+def rig_controls(pose: FacePose) -> Mapping[str, float]:
+    """Translate a validated pose to portable blendshape control names.
+
+    This is a *data adapter*, not a renderer. The approved rig must explicitly
+    bind these names to actual eyelid, gaze and mouth shapes before use.
+    """
+    if not isinstance(pose, FacePose):
+        raise TypeError("Expected FacePose")
+    values = (pose.blink, pose.gaze_x, pose.gaze_y, pose.mouth_open)
+    if any(not math.isfinite(v) for v in values):
+        raise ValueError("Non-finite facial control")
+    if not 0 <= pose.blink <= 1 or not 0 <= pose.mouth_open <= 1:
+        raise ValueError("Blendshape weights must be normalized")
+    if not -1 <= pose.gaze_x <= 1 or not -1 <= pose.gaze_y <= 1:
+        raise ValueError("Gaze controls out of range")
+    return {
+        "blink_left": pose.blink,
+        "blink_right": pose.blink,
+        "gaze_horizontal": pose.gaze_x,
+        "gaze_vertical": pose.gaze_y,
+        "mouth_open": pose.mouth_open,
+    }
+
+
+def viseme_rig_controls(timeline, audio_position_ms, *, playing=False,
+                        interrupted=False):
+    """Return 22 exclusive SAPI viseme blendshape weights for a reviewed rig.
+
+    Unlike mouth_open, these preserve the individual phonetic shape IDs.
+    Only a same-clip timeline and actual playback clock can drive them.
+    This adapter is not a renderer and does not fabricate viseme timings.
+    """
+    from lip_sync import LipTimeline
+    if not isinstance(timeline, LipTimeline):
+        raise TypeError("Expected LipTimeline from the playback audio clip")
+    if not isinstance(playing, bool) or not isinstance(interrupted, bool):
+        raise ValueError("Playback flags must be boolean")
+    weights = timeline.sample(audio_position_ms, playing=playing,
+                              interrupted=interrupted)
+    result = {f"viseme_{i:02d}": 0.0 for i in range(22)}
+    for viseme, weight in weights.items():
+        result[f"viseme_{viseme:02d}"] = weight
+    return result

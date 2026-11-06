@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+*.db
+*.db-*
+__pycache__/
+.venv/
+.pytest_cache/
+jarvis-server*.log
+jarvis-restart*.log
+.local-ai/
+.local-models/
