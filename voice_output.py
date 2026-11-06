@@ -98,8 +98,10 @@ document.getElementById('speak').onclick = () => {{
   const selectedVoice = localVoices.find(voice => voice.voiceURI === voiceMenu.value);
   if (!selectedVoice) {{ status.textContent = 'Select an installed local voice first.'; return; }}
   if (!message.trim()) {{ status.textContent = 'No spoken text in this reply.'; return; }}
+  // Do not cancel another page component's speech when JARVIS is idle.
+  const ownedSpeech = current !== null;
   current = null;
-  speechSynthesis.cancel();
+  if (ownedSpeech) speechSynthesis.cancel();
   stopPreview();
   stopped = false;
   const utterance = new SpeechSynthesisUtterance(message);
