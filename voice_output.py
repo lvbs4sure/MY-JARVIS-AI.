@@ -18,6 +18,8 @@ def speech_text(text):
     # Drop unclosed hidden elements and everything after their opening tag.
     text = re.sub(r"<(script|style|template|noscript|svg|iframe|object|audio|video|canvas)\b[^>]*>[\s\S]*$", " ", text, flags=re.I)
     text = re.sub(r"<!--.*?-->", " ", text, flags=re.S)
+    # An unfinished comment is hidden markup too; never speak its contents.
+    text = re.sub(r"<!--[\s\S]*$", " ", text)
     # Decode entities only after removing tags so encoded markup remains spoken text.
     text = re.sub(r"</?[A-Za-z][A-Za-z0-9:-]*(?:\s[^>\n]*)?\s*/?>", " ", text)
     return html.unescape(text)[:12000]
