@@ -57,7 +57,7 @@ function refreshVoices() {{
   else if (status.textContent.startsWith('No local voice')) status.textContent = 'Ready';
 }}
 if ('speechSynthesis' in window) {{ refreshVoices(); speechSynthesis.addEventListener?.('voiceschanged', refreshVoices); }}
-let current;
+let current = null;
 let stopped = false;
 let speechRequested = false;
 let utteranceSequence = 0;
