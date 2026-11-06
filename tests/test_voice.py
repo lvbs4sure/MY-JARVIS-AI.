@@ -192,6 +192,13 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("Visible", spoken)
         self.assertIn("end", spoken)
 
+    def test_unfinished_fenced_code_is_not_spoken(self):
+        from voice_output import speech_text
+        spoken = speech_text("Visible answer\n```python\nprivate_token = 12345")
+        self.assertIn("Visible answer", spoken)
+        self.assertNotIn("private_token", spoken)
+        self.assertIn("Code block omitted from speech.", spoken)
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
