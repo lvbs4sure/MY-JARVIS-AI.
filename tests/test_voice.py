@@ -180,6 +180,18 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("Visible", spoken)
         self.assertIn("end", spoken)
 
+    def test_embedded_media_fallback_is_not_spoken(self):
+        from voice_output import speech_text
+        spoken = speech_text(
+            "Visible <audio controls>private audio fallback</audio>"
+            "<video src='clip.mp4'>private video fallback</video>"
+            "<canvas>private canvas fallback</canvas> end"
+        )
+        for secret in ("private audio fallback", "private video fallback", "private canvas fallback"):
+            self.assertNotIn(secret, spoken)
+        self.assertIn("Visible", spoken)
+        self.assertIn("end", spoken)
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
