@@ -66,6 +66,13 @@ class SpeechLifecycleTests(unittest.TestCase):
         self.assertIn("if (!localVoices.length)", enabled)
         self.assertIn("Select an installed local voice first.", enabled)
 
+    def test_speech_request_revalidates_local_voice_inventory(self):
+        markup = speech_markup("Hello")
+        handler = markup.split("document.getElementById('speak').onclick = () => {", 1)[1].split("const utterance = new SpeechSynthesisUtterance", 1)[0]
+        self.assertLess(handler.index("refreshVoices();"), handler.index("const selectedVoice = localVoices.find"))
+        self.assertIn("speechSynthesis.getVoices().filter(voice => voice.localService)", markup)
+        self.assertIn("if (!selectedVoice)", handler)
+
     def test_autoplay_waits_for_local_voice_without_cloud_fallback(self):
         markup = speech_markup("Hello", auto_play=True)
         self.assertIn("if (!localVoices.length)", markup)
