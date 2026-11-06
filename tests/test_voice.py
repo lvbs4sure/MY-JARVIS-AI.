@@ -169,6 +169,17 @@ class VoiceTests(unittest.TestCase):
         self.assertIn("Hello", spoken)
         self.assertIn("world", spoken)
 
+    def test_embedded_documents_are_not_spoken(self):
+        from voice_output import speech_text
+        spoken = speech_text(
+            "Visible <iframe src='about:blank'>private iframe fallback</iframe>"
+            "<object data='about:blank'>private object fallback</object> end"
+        )
+        self.assertNotIn("private iframe fallback", spoken)
+        self.assertNotIn("private object fallback", spoken)
+        self.assertIn("Visible", spoken)
+        self.assertIn("end", spoken)
+
     def test_markdown_is_natural_speech(self):
         from voice_output import speech_text
         self.assertEqual(speech_text("## Hello **friend** [guide](https://example.com)"), "Hello friend guide")
