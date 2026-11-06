@@ -70,7 +70,7 @@ class VoiceTests(unittest.TestCase):
         markup = self.render("Hello")
         self.assertIn("if (current !== utterance || stopped) return;", markup)
         self.assertIn("if (current !== utterance) return; current = null;", markup)
-        self.assertIn("current = null;\n  speechSynthesis.cancel();", markup)
+        self.assertIn("current = null;\n  if (ownedSpeech) speechSynthesis.cancel();", markup)
         self.assertIn("current = null; stopped = true;", markup)
 
     def test_native_pause_resume_and_paused_boundaries(self):
